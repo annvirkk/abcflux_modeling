@@ -46,7 +46,7 @@ d <- cbind(d, onehot)
 resp_vars <- c("NEE_gC_m2", "GPP_gC_m2", "Reco_gC_m2") 
 
 ### Models
-models <- c("xgboost")
+models <- c("gbm", "rf", "svm")
 
 
 # For figures
@@ -73,10 +73,10 @@ for (i in resp_vars) {
   
   for (m in models) {
     
-    # m <- "xgboost"
+    # m <- "rf"
 
     # Load model files
-    mod <- readRDS(paste0("/mnt/data1/boreal/avirkkala/repos/abcflux_modeling/results/", paste(i, "1km", m, "test", sep="_"), ".rds"))
+    mod <- readRDS(paste0("/mnt/data1/boreal/avirkkala/repos/abcflux_modeling/results/", paste(i, "1km", m, sep="_"), ".rds"))
     # m <- readRDS(paste0("/mnt/data1/boreal/avirkkala/repos/abcflux_modeling/results/", paste(i, "1km_xgboost_test", sep="_"), ".rds"))  # remove _test when we have final
     # rfFit <- readRDS(paste0("../results/", paste(i, "rf", sep="_"), ".rds"))
     # svmFit <- readRDS(paste0("../results/", paste(i, "svm", sep="_"), ".rds"))

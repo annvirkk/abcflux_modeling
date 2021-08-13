@@ -12,6 +12,14 @@ library("xgboost")
 library("parallel")
 library("doParallel")
 
+# install groupdata
+#library("groupdata2")
+# If the directory doesn't exist. You will need to make sure you have permissions to create the directory
+# install and specify the created directory
+install.packages("groupdata2", lib="/mnt/data1/boreal/avirkkala/packages") 
+# use library while adding path to the Rlib path.
+library("groupdata2", lib.loc="/mnt/data1/boreal/avirkkala/packages")  
+
 
 setwd("/mnt/data1/boreal/avirkkala/repos/flux_upscaling_data/src/")
 d <- read.csv("../results/final/modeldata_avg.csv")
@@ -270,7 +278,7 @@ Baseline_vars_20km %in% colnames(d)
 
 
 ### Set up clusters for parallel processing 
-cluster <- makeCluster(detectCores() - 4) ### IN RSTUDIO USE THIS, but in Kubernetes you can just use all the 7 cores that you can
+cluster <- makeCluster(detectCores()) ### IN RSTUDIO USE detectCores() - 4 THIS, but in Kubernetes you can just use all the 7 cores that you can
 registerDoParallel(cluster)
 # see the tutorial here: https://rpubs.com/lgreski/improvingCaretPerformance
 
@@ -285,39 +293,84 @@ for (flux in resp_vars) {
   # subset data so that the response variables does not have NA
   modeldata <- subset(d, !is.na(d[flux]))
   
+  ### Take a smaller subset!! this needs to be done first
+  modeldata <- modeldata[1:500, ]
   
   ### Model parameter inputs for feature (variable) selection and model tuning
   
-  # Create a list of row indices for cross validation splits (for leave-one-site out) 
-  # i.e. this will be a list of n (n=number of individual sites)
+  # # Create a list of row indices for cross validation splits (for leave-one-site out) 
+  # # i.e. this will be a list of n (n=number of individual sites)
+  # modeldata$samplerow <- seq(1, length(modeldata$Study_ID_Clean), by=1)
+  # indices <- list()
+  # indices_not <- list()
+  # for (i in unique(modeldata$Study_ID_Clean)){
+  #   
+  #   subs <- subset(modeldata, Study_ID_Clean!=i)
+  #   subs$samplerow <- as.integer(subs$samplerow)
+  #   
+  #   sites <- list(subs$samplerow)
+  #   
+  #   sites_not <- list(as.integer(modeldata$samplerow[!(modeldata$samplerow %in% unlist(sites))]))
+  #   
+  #   indices <- append(indices, sites)
+  #   
+  #   indices_not <- append(indices_not, sites_not)
+  #   
+  # }
+  # 
+  # names(indices) <- 1:length(indices)
+  # names(indices_not) <- 1:length(indices)
+  
+  
+  
+  # Create a list of row indices for cross validation splits (for leave-one-fold out) 
+  # 10-fold cross validation strategy similar to FLUXCOM: "The training data sets were stratified into
+  # 10 folds, each containing ca. 10 % of the data. Entire sites
+  # were assigned to each fold (Jung et al., 2011)"
+  
+  folds <- fold(data= modeldata,
+    k = 10,
+    id_col = "Study_ID_Clean")
+  
+  # merge
+  folds_data <- subset(folds, select=c( ".folds", "id"))
+  modeldata <- full_join(modeldata, folds_data, by="id")
+  
+  # create a row ID
   modeldata$samplerow <- seq(1, length(modeldata$Study_ID_Clean), by=1)
+  
   indices <- list()
   indices_not <- list()
-  for (i in unique(modeldata$Study_ID_Clean)){
+  
+  for (k in unique(modeldata$.folds)) {
     
-    subs <- subset(modeldata, Study_ID_Clean!=i)
-    subs$samplerow <- as.integer(subs$samplerow)
+    # k = 1
+    subs <- subset(modeldata, .folds==k)
     
-    sites <- list(subs$samplerow)
+    # list the row ids for the fold
+    sites <- list(as.integer(subs$samplerow) )
     
+    # list other row ids that don't belong to the k fold
     sites_not <- list(as.integer(modeldata$samplerow[!(modeldata$samplerow %in% unlist(sites))]))
     
-    indices <- append(indices, sites)
+    # check that all the rows are included
+    length(sites_not[[1]]) + length(sites[[1]]) == length(modeldata$Study_ID_Clean)
     
+    # append to list (caret wants these as lists)
+    # row indices for each fold, used for model evaluation
+    indices <- append(indices, sites)
+    # row indices for model training
     indices_not <- append(indices_not, sites_not)
     
   }
+
   
   names(indices) <- 1:length(indices)
   names(indices_not) <- 1:length(indices)
   
   
-  ### Take a smaller subset!!
-  modeldata <- modeldata[1:50, ]
-  
-  # in the future, could also test  10-fold crossvalidation strategy similar to FLUXCOM: "The training data sets were stratified into
-  # 10 folds, each containing ca. 10 % of the data. Entire sites
-  # were assigned to each fold (Jung et al., 2011)"
+
+  print("model tuning and feature selection starting")
   
   ## Feature selection parameters
   # define the predictions using a rfe selection function
@@ -328,13 +381,13 @@ for (flux in resp_vars) {
   
   # Control parameters
   rfecontrol <- rfeControl(functions=caretFuncs, #caret-specific rfe process functions - there are e.g. lmFuncs too that are specific to one model type
-                           method = "cv",  # No need to specify this because we use index column which automatically does leave-site/group-out CV
+                           method = "cv",  # No need to specify this because we use index column which automatically does k-fold cv. NOT SURE IF I SHOULD SPECIFY HOW MANY TIMES EACH FOLD RESAMPLED?
                            returnResamp = "final", # A character string indicating how much of the resampled summary metrics should be saved. We only save the final model
                            # p = 0.7, # For leave-group out cross-validation: the training percentage. No need to worry about this since we use pre-defined indices
                            #summaryFunction = defaultSummary, # a function to compute performance metrics across resamples. 
                            #selectionFunction = "best", #  chooses the tuning parameter associated with the largest (or lowest for "RMSE") performance.
-                           index = indices, # a list with elements for each external resampling iteration. Each list element is the sample rows used for training at that iteration.
-                           indexOut = indices_not, # a list (the same length as index) that dictates which sample are held-out for each resample.
+                           index = indices_not, # a list with elements for each external resampling iteration. Each list element is the sample rows used for training at that iteration.
+                           indexOut = indices, # a list (the same length as index) that dictates which sample are held-out for each resample.
                            allowParallel = TRUE,  # parallel processing
                            saveDetails =TRUE) # a logical to save the predictions and variable importances from the selection process
   
@@ -349,15 +402,15 @@ for (flux in resp_vars) {
   ## Model tuning parameters
   # Includes some options about what kind of information is saved
   tunecontrol <- trainControl(
-    method = "cv",  # No need to specify this because we use index column which automatically does leave-site/group-out CV
+    method = "cv",  # No need to specify this because we use index column which automatically does k-fold cv
     verboseIter = FALSE,  # A logical for printing a training log. This could be set to FALSE in the final model runs
     returnData = FALSE, # A logical for saving the data. This could be set to FALSE in the final model runs
     returnResamp = "final", # A character string indicating how much of the resampled summary metrics should be saved. We only save the final model
     # p = 0.7, # For leave-group out cross-validation: the training percentage
     summaryFunction = defaultSummary, # a function to compute performance metrics across resamples. 
     selectionFunction = "best", #  chooses the tuning parameter associated with the largest (or lowest for "RMSE") performance.
-    index = indices, # a list with elements for each resampling iteration.  needs to be integer
-    indexOut = indices_not,
+    index = indices_not, # a list with elements for each resampling iteration.  needs to be integer
+    indexOut = indices,
     allowParallel = TRUE, # parallel processing
     savePredictions="final") # an indicator of how much of the hold-out predictions for each resample should be saved. Values can be either "all", "final", or "none". 
   # A logical value can also be used that convert to "all" (for true) or "none" (for false). "final" saves the predictions for the optimal tuning parameters.
@@ -371,7 +424,7 @@ for (flux in resp_vars) {
   # note that no data not accepted for the response, and with svm and rf in predictors
   set.seed(448)
   rfe_fit = rfe(modeldata[,Baseline_vars_1km], modeldata[,flux],
-                sizes = c(70,  60, 50), # a numeric vector of integers corresponding to the number of features that should be retained
+                sizes = c(40, 30, 20), # a numeric vector of integers corresponding to the number of features that should be retained
                 rfeControl = rfecontrol, # rfe parameters
                 method="xgbTree", # modeling method
                 trControl=tunecontrol, # tuning parameters
@@ -383,7 +436,7 @@ for (flux in resp_vars) {
   print("1 km rfe and tuning done")
   
   ### Write the model out
-  saveRDS(rfe_fit, paste0("/mnt/data1/boreal/avirkkala/repos/abcflux_modeling/results/", paste(flux, "1km_xgboost_test_speed", sep="_"), ".rds"))
+  saveRDS(rfe_fit, paste0("/mnt/data1/boreal/avirkkala/repos/abcflux_modeling/results/", paste(flux, "1km_xgboost_test_speed2", sep="_"), ".rds"))
   
 
   

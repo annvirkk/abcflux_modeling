@@ -5,7 +5,7 @@
 ### Different model data extents ###
 
 
-### Split to data from 2001-2019 and 1981-2017
+### Split to data from 2001-2019 and 1981-2017 (this will be done automatically?)
 
 
 ### Split GS and NGS

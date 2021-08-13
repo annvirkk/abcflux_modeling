@@ -281,6 +281,9 @@ for (flux in resp_vars) {
   modeldata <- subset(d, !is.na(d[flux]))
   
   
+
+  
+  
   ### Model parameter inputs for feature (variable) selection and model tuning
   
   # Create a list of row indices for cross validation splits (for leave-one-site out) 
@@ -324,8 +327,8 @@ for (flux in resp_vars) {
                            # p = 0.7, # For leave-group out cross-validation: the training percentage. No need to worry about this since we use pre-defined indices
                            #summaryFunction = defaultSummary, # a function to compute performance metrics across resamples. 
                            #selectionFunction = "best", #  chooses the tuning parameter associated with the largest (or lowest for "RMSE") performance.
-                           index = indices, # a list with elements for each external resampling iteration. Each list element is the sample rows used for training at that iteration.
-                           indexOut = indices_not, # a list (the same length as index) that dictates which sample are held-out for each resample.
+                           index = indices_not, # a list with elements for each external resampling iteration. Each list element is the sample rows used for training at that iteration.
+                           indexOut = indices, # a list (the same length as index) that dictates which sample are held-out for each resample.
                            allowParallel = TRUE,  # parallel processing
                            saveDetails =TRUE) # a logical to save the predictions and variable importances from the selection process
   
@@ -347,8 +350,8 @@ for (flux in resp_vars) {
     # p = 0.7, # For leave-group out cross-validation: the training percentage
     summaryFunction = defaultSummary, # a function to compute performance metrics across resamples. 
     selectionFunction = "best", #  chooses the tuning parameter associated with the largest (or lowest for "RMSE") performance.
-    index = indices, # a list with elements for each resampling iteration.  needs to be integer
-    indexOut = indices_not,
+    index = indices_not, # a list with elements for each resampling iteration.  needs to be integer
+    indexOut = indices,
     allowParallel = TRUE, # parallel processing
     savePredictions="final") # an indicator of how much of the hold-out predictions for each resample should be saved. Values can be either "all", "final", or "none". 
   # A logical value can also be used that convert to "all" (for true) or "none" (for false). "final" saves the predictions for the optimal tuning parameters.
