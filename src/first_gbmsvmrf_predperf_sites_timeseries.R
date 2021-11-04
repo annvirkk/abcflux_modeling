@@ -294,7 +294,7 @@ for (i in resp_vars) {
 
          facet_wrap(~Study_ID_Short, scales="free")
        
-        print(p3)
+        print(p1)
         dev.copy(png, paste(i, m, km,"predperf_timeseries_sites.png", sep="_"), width=500, height=400)
         dev.off() 
         

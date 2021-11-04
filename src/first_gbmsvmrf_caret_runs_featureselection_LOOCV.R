@@ -81,36 +81,39 @@ length(which(is.na(d$AMSR6km_thaw_days_NTSG_FT_AMSR_6km)))
 k <- subset(d, select=c(Study_ID, Meas_year, Interval, Soil.temperature.level.1_era5_soilmoist_temp_snow, Snow.depth_era5_soilmoist_temp_snow))
 
 
-# ### Factor conversions - uncommented because not needed anymore! just need to code as.factor
-# # note that randomForest and svmRadial can handle variables coded as "as.factor"
-# # but xgboost cannot: https://github.com/dmlc/xgboost/issues/95
-# # so we will need to do one-hot encoding
-# 
-# # Thermokarst
-# d <- as.data.frame(d)
-# d$Thermokarst <- factor(d$Thermokarst)
-# onehot <- model.matrix(~0+d[, 'Thermokarst'])
-# attr(onehot, "dimnames")[[2]] <- paste("Thermokarst", levels(d$Thermokarst), sep="_")
-# d <- cbind(d, onehot)
-# 
-# # land cover - no NAs
-# d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged <- factor(d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged)
-# onehot <- model.matrix(~0+d[, 'ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged'])
-# attr(onehot, "dimnames")[[2]] <- paste("ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged", levels(d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged), sep="_")
-# d <- cbind(d, onehot)
-# 
-# # Fire burn classes
-# d$Number_of_days_since_fire_classes_MCD64A1_sites_cleaned <- factor(d$Number_of_days_since_fire_classes_MCD64A1_sites_cleaned)
-# onehot <- model.matrix(~0+d[, 'Number_of_days_since_fire_classes_MCD64A1_sites_cleaned'])
-# attr(onehot, "dimnames")[[2]] <- paste("Number_of_days_since_fire_classes_MCD64A1_sites_cleaned", levels(d$Number_of_days_since_fire_classes_MCD64A1_sites_cleaned), sep="_")
-# d <- cbind(d, onehot)
-# 
-# 
-# 
-# d$Number_of_days_since_fire_classes_gfed_monthly_calc <- factor(d$Number_of_days_since_fire_classes_gfed_monthly_calc)
-# onehot <- model.matrix(~0+d[, 'Number_of_days_since_fire_classes_gfed_monthly_calc'])
-# attr(onehot, "dimnames")[[2]] <- paste("Number_of_days_since_fire_classes_gfed_monthly_calc", levels(d$Number_of_days_since_fire_classes_gfed_monthly_calc), sep="_")
-# d <- cbind(d, onehot)
+### Factor conversions
+
+# Thermokarst
+d <- as.data.frame(d)
+d$TKHP_Thermokarst <- factor(d$TKHP_Thermokarst)
+onehot <- model.matrix(~0+d[, 'TKHP_Thermokarst'])
+attr(onehot, "dimnames")[[2]] <- paste("TKHP_Thermokarst", levels(d$TKHP_Thermokarst), sep="_")
+d <- cbind(d, onehot)
+
+d <- as.data.frame(d)
+d$TKWP_Thermokarst <- factor(d$TKWP_Thermokarst)
+onehot <- model.matrix(~0+d[, 'TKWP_Thermokarst'])
+attr(onehot, "dimnames")[[2]] <- paste("TKWP_Thermokarst", levels(d$TKWP_Thermokarst), sep="_")
+d <- cbind(d, onehot)
+
+# land cover - no NAs
+d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged <- factor(d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged)
+onehot <- model.matrix(~0+d[, 'ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged'])
+attr(onehot, "dimnames")[[2]] <- paste("ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged", levels(d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged), sep="_")
+d <- cbind(d, onehot)
+
+# Fire burn classes
+d$Number_of_days_since_fire_classes_MCD64A1_sites_cleaned <- factor(d$Number_of_days_since_fire_classes_MCD64A1_sites_cleaned)
+onehot <- model.matrix(~0+d[, 'Number_of_days_since_fire_classes_MCD64A1_sites_cleaned'])
+attr(onehot, "dimnames")[[2]] <- paste("Number_of_days_since_fire_classes_MCD64A1_sites_cleaned", levels(d$Number_of_days_since_fire_classes_MCD64A1_sites_cleaned), sep="_")
+d <- cbind(d, onehot)
+
+
+
+d$Number_of_days_since_fire_classes_gfed_monthly_calc <- factor(d$Number_of_days_since_fire_classes_gfed_monthly_calc)
+onehot <- model.matrix(~0+d[, 'Number_of_days_since_fire_classes_gfed_monthly_calc'])
+attr(onehot, "dimnames")[[2]] <- paste("Number_of_days_since_fire_classes_gfed_monthly_calc", levels(d$Number_of_days_since_fire_classes_gfed_monthly_calc), sep="_")
+d <- cbind(d, onehot)
 
 
 ### Response variables
@@ -149,7 +152,7 @@ Baseline_vars_1km <- c("srad_terraclimate_sites", "vpd_terraclimate_sites", "pr_
                        "ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged", 
                        
                        "PHIHOX_M_sl1_250m_ll_SoilGrids", "BLDFIE_M_sl1_250m_ll_SoilGrids", "SoilGrids_SOC_SoilGrids_SOCstock", 
-                       "sol_watercontent.1500kPa_usda.3c2a1a_m_250m_b0..0cm_1950..2017_v0.1_SoilGrids_watercontent", "wtd_Water_table_depth", 
+                       "sol_watercontent.1500kPa_usda.3c2a1a_m_250m_b0..0cm_1950..2017_v0.1_SoilGrids_watercontent", 
                        
                        "UiO_PEX_PERPROB_5.0_20181128_2000_2016_NH_UiO_PEX_20181128_2000_2016_NH", # Permafrost
                        
@@ -166,6 +169,7 @@ Baseline_vars_1km
 
 
 
+
 # Variables used in 20 km spatial resolution models
 Baseline_vars_20km <- c("srad_terraclimate_sites", "vpd_terraclimate_sites", "pr_terraclimate_sites", "pdsi_terraclimate_sites", "tmean_terraclimate_sites", "swe_terraclimate_sites", # climate
                         
@@ -173,30 +177,30 @@ Baseline_vars_20km <- c("srad_terraclimate_sites", "vpd_terraclimate_sites", "pr
                         
                         "trend_20yrprior_terra_change_id", "terra_trend_10yrprior_terra_change_id", "terra_trend_19601990", "terra_trend_19812010",# temperature change - note that the naming convention changed a bit...
                         
-                        "ndvi_trend_10yrprior_ndvi_change_id",  "ndvi_trend_19812010", # ndvi change trend - not including permafrost for now
+                        "ndvi_trend_19812010", # ndvi change trend - not including permafrost for now
                         
                         "Barrow_CO2_conc_Barrow_CO2conc",
                         
                         "Snow.cover_era5_soilmoist_temp_snow", "Snow.depth_era5_soilmoist_temp_snow", "Soil.temperature.level.1_era5_soilmoist_temp_snow", "Volumetric.soil.water.layer.1_era5_soilmoist_temp_snow", #era5 here
                         
-                        "ndvi3g_lower_mean_GIMMS3g_NDVI_sites_high_and_low_quality", # Optical RS
+                        "ndvi3g_lowest_mean_GIMMS3g_NDVI_sites_high_and_low_quality", # Optical RS
                         
-                        "SMMR_SSMIS_thaw_days_NTSG_FT_SMMR_SSMIS_25km", "SMMR_SSMIS_transitional_days_NTSG_FT_SMMR_SSMIS_25km",#microwave 
+                        "SMMR_SSMIS_thaw_days_NTSG_FT_SMMR_SSMIS_25km",#microwave 
                       
                         "dtm_cti_merit.dem_m_250m_s0..0cm_2018_v1.0_MERIT_topo_indices_250m", "dtm_rough.scale_merit.dem_m_250m_s0..0cm_2018_v1.0_MERIT_topo_indices_250m", # Topo
                         
                         "aboveground_biomass_carbon_2010_Above_belowground_biomass", "belowground_biomass_carbon_2010_Above_belowground_biomass",
                         
-                        "Percent_NonTree_Vegetation_AVHRR_VCF5KYR", "Percent_Tree_Cover_MOD44B_sites", "Percent_NonVegetated_AVHRR_VCF5KYR", 
+                        "Percent_NonTree_Vegetation_AVHRR_VCF5KYR", "Percent_TreeCover_AVHRR_VCF5KYR", "Percent_NonVegetated_AVHRR_VCF5KYR", 
                         
                         "ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged", 
                         
                         "PHIHOX_M_sl1_250m_ll_SoilGrids", "BLDFIE_M_sl1_250m_ll_SoilGrids", "SoilGrids_SOC_SoilGrids_SOCstock", 
-                        "sol_watercontent.1500kPa_usda.3c2a1a_m_250m_b0..0cm_1950..2017_v0.1_SoilGrids_watercontent", "wtd_Water_table_depth", 
+                        "sol_watercontent.1500kPa_usda.3c2a1a_m_250m_b0..0cm_1950..2017_v0.1_SoilGrids_watercontent",  
                         
                         "UiO_PEX_PERPROB_5.0_20181128_2000_2016_NH_UiO_PEX_20181128_2000_2016_NH", # Permafrost
                         
-                        "Number_of_days_since_fire_classes_MCD64A1_sites_cleaned",   # Disturbance
+                        "Number_of_days_since_fire_classes_gfed_monthly_calc",   # Disturbance
                         
                         "TKWP_Thermokarst", "TKHP_Thermokarst" # Disturbance 
                         
@@ -212,6 +216,112 @@ d$TKHP_Thermokarst <- as.factor(d$TKHP_Thermokarst)
 d$Number_of_days_since_fire_classes_gfed_monthly_calc <- as.factor(d$Number_of_days_since_fire_classes_gfed_monthly_calc)
 d$Number_of_days_since_fire_classes_MCD64A1_sites_cleaned <- as.factor(d$Number_of_days_since_fire_classes_MCD64A1_sites_cleaned)
 d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged <- as.factor(d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged)
+
+# dummies dont need to be factors!!
+# d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged_1 <- factor(d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged_1) 
+# d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged_21 <- factor(d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged_21) 
+# d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged_30 <- factor(d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged_30) 
+# d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged_31 <- factor(d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged_31) 
+# d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged_33 <- factor(d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged_33) 
+# d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged_41 <- factor(d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged_41) 
+# d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged_60 <- factor(d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged_60) 
+# d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged_70 <- factor(d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged_70) 
+# d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged_80 <- factor(d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged_80) 
+# d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged_90 <- factor(d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged_90) 
+# d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged_120 <- factor(d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged_120) 
+# d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged_160 <- factor(d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged_160) 
+# 
+# 
+# d$Number_of_days_since_fire_classes_MCD64A1_sites_cleaned_0 <- factor(d$Number_of_days_since_fire_classes_MCD64A1_sites_cleaned_0)   
+# d$Number_of_days_since_fire_classes_MCD64A1_sites_cleaned_1 <- factor(d$Number_of_days_since_fire_classes_MCD64A1_sites_cleaned_1)   
+# d$Number_of_days_since_fire_classes_MCD64A1_sites_cleaned_3 <- factor(d$Number_of_days_since_fire_classes_MCD64A1_sites_cleaned_3)   
+# 
+# 
+# d$TKWP_Thermokarst_0 <- factor(d$TKWP_Thermokarst_0) 
+# d$TKWP_Thermokarst_1 <- factor(d$TKWP_Thermokarst_1) 
+# d$TKWP_Thermokarst_2 <- factor(d$TKWP_Thermokarst_2) 
+# d$TKWP_Thermokarst_3 <- factor(d$TKWP_Thermokarst_3) 
+# d$TKWP_Thermokarst_4 <- factor(d$TKWP_Thermokarst_4) 
+# 
+# d$TKHP_Thermokarst_0 <- factor(d$TKHP_Thermokarst_0) 
+# d$TKHP_Thermokarst_1 <- factor(d$TKHP_Thermokarst_1) 
+# d$TKHP_Thermokarst_2 <- factor(d$TKHP_Thermokarst_2) 
+# d$TKHP_Thermokarst_3 <- factor(d$TKHP_Thermokarst_3)
+
+
+
+
+# ### Baseline vars - different for svm!!!!!
+# Baseline_vars_1km_svm <- c("srad_terraclimate_sites", "vpd_terraclimate_sites", "pr_terraclimate_sites", "pdsi_terraclimate_sites", "swe_terraclimate_sites", # climate "tmean_terraclimate_sites" correlates with LST
+#                            
+#                            "tmean_TerraClimate_averages", "ppt_TerraClimate_averages",  # don't have all of these:  "swe_TerraClimate_averages", "srad_TerraClimate_averages", "vpd_TerraClimate_averages", "pdsi_TerraClimate_averages", 
+#                            
+#                            "trend_20yrprior_terra_change_id", "terra_trend_10yrprior_terra_change_id", "terra_trend_19601990", "terra_trend_19812010",# temperature change - note that the naming convention changed a bit...
+#                            
+#                            "ndvi_trend_10yrprior_ndvi_change_id",  "ndvi_trend_19812010", # ndvi change trend - not including permafrost for now
+#                            
+#                            "Barrow_CO2_conc_Barrow_CO2conc",
+#                            
+#                            "Snow.cover_era5_soilmoist_temp_snow", "Snow.depth_era5_soilmoist_temp_snow", "Soil.temperature.level.1_era5_soilmoist_temp_snow", "Volumetric.soil.water.layer.1_era5_soilmoist_temp_snow", #era5 here
+#                            
+#                            "NDVI_whittaker_constant_monthly_mean", # "EVI_whittaker_constant_monthly_mean", "EVI_MOD13A1v006_NDVI_EVI_sites_low_quality_merge_whittaker",  "NDVI_MOD13A1v006_NDVI_EVI_sites_low_quality_merge_whittaker", # Optical RS, dropped several because highly correlated
+#                            
+#                            "LST_Day_1km_MOD11A2v006_LST_Day_sites_low_quality", # "LST_Night_1km_MOD11A2v006_LST_Night_sites_low_quality", # highly correlated
+#                            
+#                            "water_ground_MCD43A4_annual_water_ground_sites_low_quality", "water_vegetation_MCD43A4_annual_water_vegetation_sites_low_quality", 
+#                            
+#                            "dtm_cti_merit.dem_m_250m_s0..0cm_2018_v1.0_MERIT_topo_indices_250m", "dtm_rough.scale_merit.dem_m_250m_s0..0cm_2018_v1.0_MERIT_topo_indices_250m", # Topo
+#                            
+#                            "aboveground_biomass_carbon_2010_Above_belowground_biomass", "belowground_biomass_carbon_2010_Above_belowground_biomass",
+#                            
+#                            "Percent_NonTree_Vegetation_MOD44B_sites", "Percent_NonVegetated_MOD44B_sites", "Percent_Tree_Cover_MOD44B_sites",
+#                            
+#                            "ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged_1", 
+#                            "ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged_21", 
+#                            "ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged_30", 
+#                            "ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged_31", 
+#                            "ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged_33", 
+#                            "ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged_41", 
+#                            "ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged_60", 
+#                            "ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged_70", 
+#                            "ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged_80", 
+#                            "ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged_90", 
+#                            "ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged_120", 
+#                            "ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged_160", 
+#                            
+#                            
+#                            "PHIHOX_M_sl1_250m_ll_SoilGrids", "BLDFIE_M_sl1_250m_ll_SoilGrids", "SoilGrids_SOC_SoilGrids_SOCstock", 
+#                            "sol_watercontent.1500kPa_usda.3c2a1a_m_250m_b0..0cm_1950..2017_v0.1_SoilGrids_watercontent", "wtd_Water_table_depth", 
+#                            
+#                            "UiO_PEX_PERPROB_5.0_20181128_2000_2016_NH_UiO_PEX_20181128_2000_2016_NH", # Permafrost
+#                            
+#                            "Number_of_days_since_fire_classes_MCD64A1_sites_cleaned_0",   # Disturbance
+#                            "Number_of_days_since_fire_classes_MCD64A1_sites_cleaned_1",   # Disturbance
+#                            "Number_of_days_since_fire_classes_MCD64A1_sites_cleaned_3",   # Disturbance
+#                            
+#                            
+#                            "TKWP_Thermokarst_0",
+#                            "TKWP_Thermokarst_1",
+#                            "TKWP_Thermokarst_2",
+#                            "TKWP_Thermokarst_3",
+#                            "TKWP_Thermokarst_4",
+#                            
+#                            
+#                            "TKHP_Thermokarst_0", # Disturbance 
+#                            "TKHP_Thermokarst_1", # Disturbance 
+#                            "TKHP_Thermokarst_2", # Disturbance 
+#                            "TKHP_Thermokarst_3" # Disturbance 
+#                            
+# )
+# 
+# 
+# # check that the columns exist
+# Baseline_vars_1km_svm %in% colnames(d)
+# Baseline_vars_1km_svm
+
+
+
+
 
 
 

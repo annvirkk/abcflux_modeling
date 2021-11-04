@@ -55,6 +55,7 @@ for (i in unique(d4$Study_ID_Short)) {
     print(r)
     # i <- "Euskirchen_US-TFBS_tower1"
     # i <- "Vesala_FI-Hyy_tower1"
+    # i <- "Schuur_US-EML_tower1"
     # r <- "NEE_gC_m2"
     
     d5 <- subset(d4, Study_ID_Short==i & !is.na(d4[, r])) # or any(is.na(r))????
