@@ -9,23 +9,24 @@
 # install.packages("pdp", lib="/mnt/data1/boreal/avirkkala/packages")
 #install.packages("Metrics", lib="/mnt/data1/boreal/avirkkala/packages")
 
-library("caret", lib.loc="/mnt/data1/boreal/avirkkala/packages")
-library("vip", lib.loc="/mnt/data1/boreal/avirkkala/packages")
-library("pdp", lib.loc="/mnt/data1/boreal/avirkkala/packages")
-library(Metrics, lib.loc="/mnt/data1/boreal/avirkkala/packages")
+library("caret")
+library("vip")
+library("pdp")
+library(Metrics)
 library("ggplot2")
 library("viridis")
 library("dplyr")
+library("ggridges")
 
 ### Data
-setwd("/mnt/data1/boreal/avirkkala/repos/flux_upscaling_data/src/")
+setwd("D:/repos/flux_upscaling_data/src/")
 d <- read.csv("../results/final/modeldata_avg.csv")
 
 
 # SOME EDITS THAT WERE MADE
 d$Number_of_days_since_fire_classes_MCD64A1_sites_cleaned <- ifelse(d$Number_of_days_since_fire_classes_MCD64A1_sites_cleaned==2, 1, d$Number_of_days_since_fire_classes_MCD64A1_sites_cleaned)
 d$Number_of_days_since_fire_classes_MCD64A1_sites_cleaned <- ifelse(d$Number_of_days_since_fire_classes_MCD64A1_sites_cleaned==4, 3, d$Number_of_days_since_fire_classes_MCD64A1_sites_cleaned)
-
+d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged <- ifelse(d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged==1, 31, d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged)
 
 
 
@@ -38,13 +39,13 @@ resp_vars <- c("NEE_gC_m2", "GPP_gC_m2", "Reco_gC_m2")
 
 ## List predictors for the models
 # Variables used in 1 km spatial resolution models
-Baseline_vars_1km <- c("srad_terraclimate_sites", "vpd_terraclimate_sites", "pr_terraclimate_sites", "pdsi_terraclimate_sites", "swe_terraclimate_sites", # met
+Baseline_vars_1km <- c("srad_terraclimate_sites", "vpd_terraclimate_sites", "pr_terraclimate_sites", "pdsi_terraclimate_sites", # met
                        
                        "tmean_TerraClimate_averages", "ppt_TerraClimate_averages", # climate
                        
                        "trend_20yrprior_terra_change_id",  "terra_trend_19601990", # temperature change - note that the naming convention changed a bit...
                        
-                       "ndvi_trend_10yrprior_ndvi_change_id",  "ndvi_trend_19812010", # ndvi change trend 
+                       "ndvi_trend_19812010", # ndvi change trend 
                        
                        "Barrow_CO2_conc_Barrow_CO2conc", # atmos CO2 conc
                        
@@ -86,7 +87,7 @@ Baseline_vars_1km
 
 
 # Variables used in 20 km spatial resolution models
-Baseline_vars_20km <- c("srad_terraclimate_sites", "vpd_terraclimate_sites", "pr_terraclimate_sites", "pdsi_terraclimate_sites", "tmean_terraclimate_sites", "swe_terraclimate_sites", 
+Baseline_vars_20km <- c("srad_terraclimate_sites", "vpd_terraclimate_sites", "pr_terraclimate_sites", "pdsi_terraclimate_sites", "tmean_terraclimate_sites",  # tmean included because don't have LST
                         
                         "tmean_TerraClimate_averages", "ppt_TerraClimate_averages", 
                         
@@ -98,7 +99,7 @@ Baseline_vars_20km <- c("srad_terraclimate_sites", "vpd_terraclimate_sites", "pr
                         
                         "Snow.cover_era5_soilmoist_temp_snow", "Snow.depth_era5_soilmoist_temp_snow", "Soil.temperature.level.1_era5_soilmoist_temp_snow", "Volumetric.soil.water.layer.1_era5_soilmoist_temp_snow", 
                         
-                        "ndvi3g_lowest_mean_GIMMS3g_NDVI_sites_high_and_low_quality",  ############### VAIHDA NIMI
+                        "ndvi3g_lowest_gapfilled_mean_GIMMS3g_NDVI_sites_low_quality_gapfilled",  
                         
                         "SMMR_SSMIS_thaw_days_NTSG_FT_SMMR_SSMIS_25km", # microwave 
                         
@@ -136,23 +137,24 @@ d$Number_of_days_since_fire_classes_gfed_monthly_calc <- as.factor(d$Number_of_d
 d$Number_of_days_since_fire_classes_MCD64A1_sites_cleaned <- as.factor(d$Number_of_days_since_fire_classes_MCD64A1_sites_cleaned)
 d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged <- as.factor(d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged)
 d$forest_age_class_forest_age_sites <- as.factor(d$forest_age_class_forest_age_sites)
+d$Study_ID_Short <- as.factor(d$Study_ID_Short)
 
 
 
 # # Need to create dummy variables because that's how svm interprets some of them
-# d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged80 <- ifelse(d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged==80, 1, 0)
-# d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged60 <- ifelse(d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged==60, 1, 0)
-# d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged90 <- ifelse(d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged==90, 1, 0)
-# d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged21 <- ifelse(d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged==21, 1, 0)
-# d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged33 <- ifelse(d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged==33, 1, 0)
-# d$Number_of_days_since_fire_classes_MCD64A1_sites_cleaned1 <- ifelse(d$Number_of_days_since_fire_classes_MCD64A1_sites_cleaned==1, 1, 0)
-# d$Number_of_days_since_fire_classes_MCD64A1_sites_cleaned3 <- ifelse(d$Number_of_days_since_fire_classes_MCD64A1_sites_cleaned==3, 1, 0)
-# d$TKHP_Thermokarst3 <- ifelse(d$TKHP_Thermokarst==3, 1, 0)
-# d$TKHP_Thermokarst1 <- ifelse(d$TKHP_Thermokarst==1, 1, 0)
-# d$TKWP_Thermokarst1 <- ifelse(d$TKWP_Thermokarst==1, 1, 0)
-# d$TKWP_Thermokarst2 <- ifelse(d$TKWP_Thermokarst==2, 1, 0)
-# d$TKWP_Thermokarst4 <- ifelse(d$TKWP_Thermokarst==4, 1, 0)
-# 
+d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged80 <- ifelse(d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged==80, 1, 0)
+d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged60 <- ifelse(d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged==60, 1, 0)
+d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged90 <- ifelse(d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged==90, 1, 0)
+d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged21 <- ifelse(d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged==21, 1, 0)
+d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged33 <- ifelse(d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged==33, 1, 0)
+d$Number_of_days_since_fire_classes_MCD64A1_sites_cleaned1 <- ifelse(d$Number_of_days_since_fire_classes_MCD64A1_sites_cleaned==1, 1, 0)
+d$Number_of_days_since_fire_classes_MCD64A1_sites_cleaned3 <- ifelse(d$Number_of_days_since_fire_classes_MCD64A1_sites_cleaned==3, 1, 0)
+d$TKHP_Thermokarst3 <- ifelse(d$TKHP_Thermokarst==3, 1, 0)
+d$TKHP_Thermokarst1 <- ifelse(d$TKHP_Thermokarst==1, 1, 0)
+d$TKWP_Thermokarst1 <- ifelse(d$TKWP_Thermokarst==1, 1, 0)
+d$TKWP_Thermokarst2 <- ifelse(d$TKWP_Thermokarst==2, 1, 0)
+d$TKWP_Thermokarst4 <- ifelse(d$TKWP_Thermokarst==4, 1, 0)
+
 Baseline_vars_1km_dummy <- c("ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged80",
                              "ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged60",
                              "ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged90",
@@ -168,7 +170,7 @@ Baseline_vars_1km_dummy <- c("ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_
 
 # 
 # # TEMP
-# Baseline_vars_20km_dummy <- c()
+ Baseline_vars_20km_dummy <- c()
 
 
 
@@ -187,7 +189,7 @@ kms <- c("1km", "20km")
 
 
 ### Set folder for results
-setwd("/mnt/data1/boreal/avirkkala/repos/abcflux_modeling/results/figures")
+setwd("D:/repos/abcflux_modeling/results/figures")
 
 
 
@@ -243,6 +245,7 @@ for (i in resp_vars) {
   for (km in kms) {
     
     # km <- "1km"
+    # km <- "20km"
     # i <- "NEE_gC_m2"
     # i <- "GPP_gC_m2"
     # i <- "Reco_gC_m2" 
@@ -260,19 +263,19 @@ for (i in resp_vars) {
       # m <- "svm"
       
       # Load model files
-      mod <- readRDS(paste0("/mnt/data1/boreal/avirkkala/repos/abcflux_modeling/results/", paste(i,  km, m, "loocv", sep="_"), ".rds")) # jostain syystÃ¤ sanoo 10-fold cv???
+      mod <- readRDS(paste0("D:/repos/abcflux_modeling/results/", paste(i,  km, m, "loocv", sep="_"), ".rds")) # jostain syystÃ¤ sanoo 10-fold cv???
       
       
       # Individual models for ensemble prediction
-      gbmFit <- readRDS(paste0("/mnt/data1/boreal/avirkkala/repos/abcflux_modeling/results/", paste(i,  km, "gbm_loocv", sep="_"), ".rds"))
-      rfFit <- readRDS(paste0("/mnt/data1/boreal/avirkkala/repos/abcflux_modeling/results/", paste(i,  km, "rf_loocv", sep="_"), ".rds"))
-      svmFit <- readRDS(paste0("/mnt/data1/boreal/avirkkala/repos/abcflux_modeling/results/", paste(i,  km, "svm_loocv", sep="_"), ".rds"))
+      gbmFit <- readRDS(paste0("D:/repos/abcflux_modeling/results/", paste(i,  km, "gbm_loocv", sep="_"), ".rds"))
+      rfFit <- readRDS(paste0("D:/repos/abcflux_modeling/results/", paste(i,  km, "rf_loocv", sep="_"), ".rds"))
+      svmFit <- readRDS(paste0("D:/repos/abcflux_modeling/results/", paste(i,  km, "svm_loocv", sep="_"), ".rds"))
       
       
-      ### TEMPORARY
-      gbmFit <- readRDS(paste0("/mnt/data1/boreal/avirkkala/repos/abcflux_modeling/results/old/", paste(i,  km, "gbm_loocv", sep="_"), ".rds"))
-      rfFit <- readRDS(paste0("/mnt/data1/boreal/avirkkala/repos/abcflux_modeling/results/old/", paste(i,  km, "rf_loocv", sep="_"), ".rds"))
-      svmFit <- readRDS(paste0("/mnt/data1/boreal/avirkkala/repos/abcflux_modeling/results/old/", paste(i,  km, "svm_loocv", sep="_"), ".rds"))
+      # ### TEMPORARY
+      # gbmFit <- readRDS(paste0("D:/repos/abcflux_modeling/results/old/", paste(i,  km, "gbm_loocv", sep="_"), ".rds"))
+      # rfFit <- readRDS(paste0("D:/repos/abcflux_modeling/results/old/", paste(i,  km, "rf_loocv", sep="_"), ".rds"))
+      # svmFit <- readRDS(paste0("D:/repos/abcflux_modeling/results/old/", paste(i,  km, "svm_loocv", sep="_"), ".rds"))
       
       # # Print the best variables
       # print("Best variables are:")
@@ -355,6 +358,12 @@ for (i in resp_vars) {
         obspred <- merge(modeldata22, preds, by.x="samplerow", by.y="rowIndex")
         #plot(obspred$NEE_gC_m2, obspred$obs)
         
+        pred_ens <- merge(preds_gbm, preds_rf, by="rowIndex")
+        pred_ens <- merge(pred_ens, preds_svm, by="rowIndex")
+        pred_ens$pred_ens <- apply(pred_ens[,c(2, 6, 10)], 1, median)
+        
+        pred_ens_all <- merge(modeldata11, pred_ens, by.x="samplerow", by.y="rowIndex")
+        
       }
       
       
@@ -396,16 +405,16 @@ for (i in resp_vars) {
       p1 <- ggplot(obspred, aes(x=pred, y=obs, colour=factor(Biome))) +
         geom_point(shape = 16,  size=3) + geom_abline(slope = 1) + 
         
-        annotate(label = sprintf("MAE = %.1f   \nRsquared = %.2f   \nRMSE = %.1f   \n ", 
+        annotate(label = sprintf("\n MAE = %.1f   \n Rsquared = %.2f   \n RMSE = %.1f   \n ", 
                                  r_stats %>% filter(model==m) %>% dplyr::select(MAE) %>% as.character() %>% as.numeric(), 
                                  r_stats %>% filter(model==m) %>% dplyr::select(Rsquared) %>% as.numeric(),
-                                 r_stats %>% filter(model==m) %>% dplyr::select(RMSE) %>% as.numeric()), geom = "text", x = Inf, y = -Inf, size = 4, hjust = 1, vjust = 0) +
+                                 r_stats %>% filter(model==m) %>% dplyr::select(RMSE) %>% as.numeric()), geom = "text", x = -Inf, y = Inf, size = 8, hjust = 0, vjust = 1) +
         
         theme_pub  + theme(legend.title=element_blank()) + scale_colour_viridis(discrete=TRUE) + xlab(m) + 
         xlim(scale_min, scale_max) + ylim(scale_min, scale_max)
       
       # Print out
-      setwd("/mnt/data1/boreal/avirkkala/repos/abcflux_modeling/results/figures/")
+      setwd("D:/repos/abcflux_modeling/results/figures/")
       print(p1)
       dev.copy(png, paste(i, m, km,"loocv_predperf_biome.png", sep="_"), width=500, height=400)
       dev.off()
@@ -415,10 +424,10 @@ for (i in resp_vars) {
       p2 <- ggplot(obspred, aes(x=pred, y=obs, colour=factor(Veg_type_Short))) +
         geom_point(shape = 16,  size=3) + geom_abline(slope = 1) + 
         
-        annotate(label = sprintf("MAE = %.1f \nRsquared = %.2f \nRMSE = %.1f \n ", 
+        annotate(label = sprintf("\n MAE = %.1f \n Rsquared = %.2f \n RMSE = %.1f \n ", 
                                  r_stats %>% filter(model==m) %>% dplyr::select(MAE) %>% as.character() %>% as.numeric(), 
                                  r_stats %>% filter(model==m) %>% dplyr::select(Rsquared) %>% as.numeric(),
-                                 r_stats %>% filter(model==m) %>% dplyr::select(RMSE) %>% as.numeric()), geom = "text", x = Inf, y = -Inf, size = 4, hjust = 1, vjust = 0) +
+                                 r_stats %>% filter(model==m) %>% dplyr::select(RMSE) %>% as.numeric()), geom = "text", x = -Inf, y = Inf, size = 8, hjust = 0, vjust = 1) +
         
         theme_pub  + theme(legend.title=element_blank()) + scale_colour_viridis(discrete=TRUE) + xlab(m) + 
         xlim(scale_min, scale_max) + ylim(scale_min, scale_max)
@@ -430,20 +439,23 @@ for (i in resp_vars) {
       
       # Colored by disturbance
       obspred$Disturbance <- as.character(obspred$Disturbance)
-      obspred$Disturbance <- ifelse(is.na(obspred$Disturbance), "NA", obspred$Disturbance)
-      p3 <- ggplot(obspred, aes(x=pred, y=obs, colour=factor(Disturbance))) +
-        geom_point(shape = 16,  size=3) + geom_abline(slope = 1) + 
+      obspred$Disturbance <- ifelse(is.na(obspred$Disturbance), "No", obspred$Disturbance)
+      obspred$Disturbance <- ifelse(obspred$Disturbance=="No", "NA/No", obspred$Disturbance)
+      obspred$Disturbance <- factor(obspred$Disturbance, levels=c( "NA/No", "Thermokarst", "Drainage",  "Fire", "Harvest", "Larval Outbreak"))
+    
+      p3 <- ggplot(obspred, aes(x=pred, y=obs, colour=Disturbance)) +
+        geom_point(shape = 16,  size=3, alpha=0.7) + geom_abline(slope = 1) + 
         
-        annotate(label = sprintf("MAE = %.1f \nRsquared = %.2f \nRMSE = %.1f \n ", 
+        annotate(label = sprintf("\n MAE = %.1f \n Rsquared = %.2f \n RMSE = %.1f \n ", 
                                  r_stats %>% filter(model==m) %>% dplyr::select(MAE) %>% as.character() %>% as.numeric(), 
                                  r_stats %>% filter(model==m) %>% dplyr::select(Rsquared) %>% as.numeric(),
-                                 r_stats %>% filter(model==m) %>% dplyr::select(RMSE) %>% as.numeric()), geom = "text", x = Inf, y = -Inf, size = 4, hjust = 1, vjust = 0) +
+                                 r_stats %>% filter(model==m) %>% dplyr::select(RMSE) %>% as.numeric()), geom = "text", x = -Inf, y = Inf, size = 8, hjust = 0, vjust = 1) +
         
         theme_pub  + theme(legend.title=element_blank())  + scale_colour_viridis(discrete=TRUE) + xlab(m) + 
         xlim(scale_min, scale_max) + ylim(scale_min, scale_max)
       
       print(p3)
-      dev.copy(png, paste(i, m, km,"loocv_predperf_disturbance.png", sep="_"), width=500, height=400)
+      dev.copy(png, paste(i, m, km,"loocv_predperf_disturbance.png", sep="_"), width=600, height=400)
       dev.off()
       
       
@@ -452,10 +464,10 @@ for (i in resp_vars) {
       p5 <- ggplot(obspred, aes(x=pred, y=obs, colour=factor(Flux_method))) +
         geom_point(shape = 16,  size=3) + geom_abline(slope = 1) + 
         
-        annotate(label = sprintf("MAE = %.1f \nRsquared = %.2f \nRMSE = %.1f \n ", 
+        annotate(label = sprintf("\n MAE = %.1f \n Rsquared = %.2f \n RMSE = %.1f \n ", 
                                  r_stats %>% filter(model==m) %>% dplyr::select(MAE) %>% as.character() %>% as.numeric(), 
                                  r_stats %>% filter(model==m) %>% dplyr::select(Rsquared) %>% as.numeric(),
-                                 r_stats %>% filter(model==m) %>% dplyr::select(RMSE) %>% as.numeric()), geom = "text", x = Inf, y = -Inf, size = 4, hjust = 1, vjust = 0) +
+                                 r_stats %>% filter(model==m) %>% dplyr::select(RMSE) %>% as.numeric()), geom = "text", x = -Inf, y = Inf, size = 8, hjust = 0, vjust = 1) +
         
         theme_pub  + theme(legend.title=element_blank())  + scale_colour_viridis(discrete=TRUE) + xlab(m) + 
         xlim(scale_min, scale_max) + ylim(scale_min, scale_max)
@@ -469,10 +481,10 @@ for (i in resp_vars) {
       p6 <- ggplot(obspred, aes(x=pred, y=obs, colour=factor(Flux_method_detail))) +
         geom_point(shape = 16,  size=3) + geom_abline(slope = 1) + 
         
-        annotate(label = sprintf("MAE = %.1f \nRsquared = %.2f \nRMSE = %.1f \n ", 
+        annotate(label = sprintf("\n MAE = %.1f \n Rsquared = %.2f \n RMSE = %.1f \n ", 
                                  r_stats %>% filter(model==m) %>% dplyr::select(MAE) %>% as.character() %>% as.numeric(), 
                                  r_stats %>% filter(model==m) %>% dplyr::select(Rsquared) %>% as.numeric(),
-                                 r_stats %>% filter(model==m) %>% dplyr::select(RMSE) %>% as.numeric()), geom = "text", x = Inf, y = -Inf, size = 4, hjust = 1, vjust = 0) +
+                                 r_stats %>% filter(model==m) %>% dplyr::select(RMSE) %>% as.numeric()), geom = "text", x = -Inf, y = Inf, size = 8, hjust = 0, vjust = 1) +
         
         theme_pub  + theme(legend.title=element_blank()) + scale_colour_viridis(discrete=TRUE) + xlab(m) + 
         xlim(scale_min, scale_max) + ylim(scale_min, scale_max)
@@ -488,10 +500,10 @@ for (i in resp_vars) {
       p7 <- ggplot(obspred, aes(x=pred, y=obs, colour=factor(Measurement_frequency))) +
         geom_point(shape = 16,  size=3) + geom_abline(slope = 1) + 
         
-        annotate(label = sprintf("MAE = %.1f \nRsquared = %.2f \nRMSE = %.1f \n ", 
+        annotate(label = sprintf("\n MAE = %.1f \n Rsquared = %.2f \n RMSE = %.1f \n ", 
                                  r_stats %>% filter(model==m) %>% dplyr::select(MAE) %>% as.character() %>% as.numeric(), 
                                  r_stats %>% filter(model==m) %>% dplyr::select(Rsquared) %>% as.numeric(),
-                                 r_stats %>% filter(model==m) %>% dplyr::select(RMSE) %>% as.numeric()), geom = "text", x = Inf, y = -Inf, size = 4, hjust = 1, vjust = 0) +
+                                 r_stats %>% filter(model==m) %>% dplyr::select(RMSE) %>% as.numeric()), geom = "text", x = -Inf, y = Inf, size = 8, hjust = 0, vjust = 1) +
         
         theme_pub  + theme(legend.title=element_blank())  + scale_colour_viridis(discrete=TRUE) + xlab(m) + 
         xlim(scale_min, scale_max) + ylim(scale_min, scale_max)
@@ -507,10 +519,10 @@ for (i in resp_vars) {
       p8 <- ggplot(obspred, aes(x=pred, y=obs, colour=factor(Study_ID_figure))) +
         geom_point(shape = 16,  size=3) + geom_abline(slope = 1) + 
         
-        annotate(label = sprintf("MAE = %.1f \nRsquared = %.2f \nRMSE = %.1f \n ", 
+        annotate(label = sprintf("\n MAE = %.1f \n Rsquared = %.2f \n RMSE = %.1f \n ", 
                                  r_stats %>% filter(model==m) %>% dplyr::select(MAE) %>% as.character() %>% as.numeric(), 
                                  r_stats %>% filter(model==m) %>% dplyr::select(Rsquared) %>% as.numeric(),
-                                 r_stats %>% filter(model==m) %>% dplyr::select(RMSE) %>% as.numeric()), geom = "text", x = Inf, y = -Inf, size = 4, hjust = 1, vjust = 0) +
+                                 r_stats %>% filter(model==m) %>% dplyr::select(RMSE) %>% as.numeric()), geom = "text", x = -Inf, y = Inf, size = 8, hjust = 0, vjust = 1) +
         
         theme_pub  + theme(legend.title=element_blank())  + scale_colour_viridis(discrete=TRUE) + xlab(m) + 
         xlim(scale_min, scale_max) + ylim(scale_min, scale_max)
@@ -525,10 +537,10 @@ for (i in resp_vars) {
       p9 <- ggplot(obspred, aes(x=pred, y=obs, colour=factor(Interval))) +
         geom_point(shape = 16,  size=3) + geom_abline(slope = 1) + 
         
-        annotate(label = sprintf("MAE = %.1f \nRsquared = %.2f \nRMSE = %.1f \n ", 
+        annotate(label = sprintf("\n MAE = %.1f \n Rsquared = %.2f \n RMSE = %.1f \n ", 
                                  r_stats %>% filter(model==m) %>% dplyr::select(MAE) %>% as.character() %>% as.numeric(), 
                                  r_stats %>% filter(model==m) %>% dplyr::select(Rsquared) %>% as.numeric(),
-                                 r_stats %>% filter(model==m) %>% dplyr::select(RMSE) %>% as.numeric()), geom = "text", x = Inf, y = -Inf, size = 4, hjust = 1, vjust = 0) +
+                                 r_stats %>% filter(model==m) %>% dplyr::select(RMSE) %>% as.numeric()), geom = "text", x = -Inf, y = Inf, size = 8, hjust = 0, vjust = 1) +
         
         theme_pub  + theme(legend.title=element_blank())  + scale_colour_viridis(discrete=TRUE) + xlab(m) + 
         xlim(scale_min, scale_max) + ylim(scale_min, scale_max)
@@ -542,10 +554,10 @@ for (i in resp_vars) {
       p9 <- ggplot(obspred, aes(x=pred, y=obs, colour=Interval)) +
         geom_point(shape = 16,  size=3) + geom_abline(slope = 1) + 
         
-        annotate(label = sprintf("MAE = %.1f \nRsquared = %.2f \nRMSE = %.1f \n ", 
+        annotate(label = sprintf("\n MAE = %.1f \n Rsquared = %.2f \n RMSE = %.1f \n ", 
                                  r_stats %>% filter(model==m) %>% dplyr::select(MAE) %>% as.character() %>% as.numeric(), 
                                  r_stats %>% filter(model==m) %>% dplyr::select(Rsquared) %>% as.numeric(),
-                                 r_stats %>% filter(model==m) %>% dplyr::select(RMSE) %>% as.numeric()), geom = "text", x = Inf, y = -Inf, size = 4, hjust = 1, vjust = 0) +
+                                 r_stats %>% filter(model==m) %>% dplyr::select(RMSE) %>% as.numeric()), geom = "text", x = -Inf, y = Inf, size = 8, hjust = 0, vjust = 1) +
         
         theme_pub  + theme(legend.title=element_blank())  + scale_colour_viridis(discrete=FALSE) + xlab(m) + 
         xlim(scale_min, scale_max) + ylim(scale_min, scale_max) + facet_wrap(~Interval)
@@ -560,10 +572,10 @@ for (i in resp_vars) {
       p10 <- ggplot(obspred, aes(x=obs, y=obs-pred)) +
         geom_point(shape = 16,  size=3) + geom_abline(slope = 0) + 
         
-        annotate(label = sprintf("MAE = %.1f \nRsquared = %.2f \nRMSE = %.1f \n ", 
+        annotate(label = sprintf("\n MAE = %.1f \n Rsquared = %.2f \n RMSE = %.1f \n ", 
                                  r_stats %>% filter(model==m) %>% dplyr::select(MAE) %>% as.character() %>% as.numeric(), 
                                  r_stats %>% filter(model==m) %>% dplyr::select(Rsquared) %>% as.numeric(),
-                                 r_stats %>% filter(model==m) %>% dplyr::select(RMSE) %>% as.numeric()), geom = "text", x = Inf, y = -Inf, size = 4, hjust = 1, vjust = 0) +
+                                 r_stats %>% filter(model==m) %>% dplyr::select(RMSE) %>% as.numeric()), geom = "text", x = -Inf, y = Inf, size = 8, hjust = 0, vjust = 1) +
         
         theme_pub  + theme(legend.title=element_blank())  + scale_colour_viridis(discrete=FALSE) + xlab("obs") + 
         xlim(scale_min, scale_max) + ylim(scale_min, scale_max) 
@@ -574,9 +586,7 @@ for (i in resp_vars) {
       
       print(paste(i, m, km, "pred perf figures done"))
       
-      
-      
-      
+    
       
       ### Ensemble - remember to calculate model performance first
       
@@ -591,10 +601,15 @@ for (i in resp_vars) {
       r2 <- cor(pred_ens_all$obs, pred_ens_all$pred_ens)^2
       rmse <- rmse(pred_ens_all$obs, pred_ens_all$pred_ens)
       
-      p10 <- ggplot(pred_ens_all, aes(x=pred_ens, y=obs, colour=factor(Disturbance))) +
-        geom_point(shape = 16,  size=3) + geom_abline(slope = 1) + 
+      pred_ens_all$Disturbance <- as.character(pred_ens_all$Disturbance)
+      pred_ens_all$Disturbance <- ifelse(is.na(pred_ens_all$Disturbance), "No", pred_ens_all$Disturbance)
+      pred_ens_all$Disturbance <- ifelse(pred_ens_all$Disturbance=="No", "NA/No", pred_ens_all$Disturbance)
+      pred_ens_all$Disturbance <- factor(pred_ens_all$Disturbance, levels=c( "NA/No", "Thermokarst", "Drainage",  "Fire", "Harvest", "Larval Outbreak"))
+      
+      p10 <- ggplot(pred_ens_all, aes(x=pred_ens, y=obs, colour=Disturbance)) +
+        geom_point(shape = 16,  size=3, alpha=0.7) + geom_abline(slope = 1) + 
         
-        annotate(label = sprintf("MAE = %.1f \nRsquared = %.2f \nRMSE = %.1f \n ", 
+        annotate(label = sprintf("\n MAE = %.1f \n Rsquared = %.2f \n RMSE = %.1f \n ", 
                                  mae, r2, rmse), geom = "text", x = Inf, y = -Inf, size = 7, hjust = 1, vjust = 0) +
         
         theme_pub    + scale_colour_viridis(discrete=TRUE) + xlab(expression(paste("Predicted flux (ensemble) g C m"^{-2}, month^{-1}))) + ylab(expression(paste("Observed flux g C m"^{-2}, month^{-1}))) + 
@@ -602,10 +617,187 @@ for (i in resp_vars) {
         xlim(scale_min, scale_max) + ylim(scale_min, scale_max) + theme(axis.title=element_text(size=16))
       
       print(p10)
-      dev.copy(png, paste(i, km, "loocv_predperf_ensemble.png", sep="_"), width=800, height=600)
+      dev.copy(png, paste(i, km, "loocv_predperf_ensemble.png", sep="_"), width=600, height=400)
       dev.off()
       
       print(paste(i, m, km, "pred perf figures done"))
+      
+      
+      
+      
+      ### Pred perf other possibilities: https://www.ryan-alcantara.com/projects/p89_random_forest_trees/
+      p9 <- ggplot(obspred) +
+        geom_density_ridges(aes(x=obs, group=factor(Country))) + geom_abline(slope = 1) + 
+        
+        annotate(label = sprintf("\n MAE = %.1f \n Rsquared = %.2f \n RMSE = %.1f \n ", 
+                                 r_stats %>% filter(model==m) %>% dplyr::select(MAE) %>% as.character() %>% as.numeric(), 
+                                 r_stats %>% filter(model==m) %>% dplyr::select(Rsquared) %>% as.numeric(),
+                                 r_stats %>% filter(model==m) %>% dplyr::select(RMSE) %>% as.numeric()), geom = "text", x = -Inf, y = Inf, size = 8, hjust = 0, vjust = 1) +
+        
+        theme_pub  + theme(legend.title=element_blank())  + scale_colour_viridis(discrete=TRUE) + xlab(m) + 
+        xlim(scale_min, scale_max) + ylim(scale_min, scale_max)
+      
+      obspred2 <- obspred
+      obspred2$obs <- round(obspred2$obs)
+      ggplot(obspred2) + 
+        geom_abline(slope = 1, intercept = 0, lty = 2)+  # line of identity
+        geom_density_ridges(aes(x=pred, y=factor(obs), group = factor(Country), fill = factor(Country)),
+                            alpha = 0.3, color = 'black', rel_min_height = 0.02, size = 0.5)
+      
+      print(p9)
+      
+      ggplot(obspred) + geom_bin2d(aes(x=pred, y=obs), bins=30) + geom_abline(slope = 1) + 
+        xlim(scale_min, scale_max) + ylim(scale_min, scale_max) + facet_wrap(~Country)
+      
+      
+      ggplot(obspred) + geom_point(aes(x=predtest, y=obs)) + geom_abline(slope = 1) + 
+        facet_wrap(~Country)
+
+      
+      
+      predtest <- predict(mod, obspred)
+      obspred$predtest <- predtest
+      ggplot(obspred) + geom_bin2d(aes(x=predtest, y=obs), bins=30) + geom_abline(slope = 1) + 
+        xlim(scale_min, scale_max) + ylim(scale_min, scale_max) + facet_wrap(~Country)
+      
+      ggplot(obspred) + geom_point(aes(x=predtest, y=obs)) + geom_abline(slope = 1) + 
+        facet_wrap(~Country)
+      
+      
+      ggplot(obspred) + geom_point(aes(x=predtest, y=obs)) + geom_abline(slope = 1) + 
+        facet_wrap(~Country)
+      
+      # if grouped to annual mean...
+      
+      obspredtest <- obspred %>% group_by(Study_ID_Short, Country, Biome, Meas_year) %>% summarize(obs_sum=sum(obs), predtest_sum=sum(predtest), n=n()) %>% filter(n==12)
+      ggplot(obspredtest) + geom_bin2d(aes(x=predtest_sum, y=obs_sum), bins=30) + geom_abline(slope = 1) + 
+        xlim(scale_min, scale_max) + ylim(scale_min, scale_max) + facet_wrap(~paste(Country, Biome))
+      
+      
+      ggplot(obspredtest) + geom_point(aes(x=predtest_sum, y=obs_sum)) + geom_abline(slope = 1) + 
+        facet_wrap(~Country)
+      
+      # Sweden and USA have quite many source observations that are predicted as larger Co2 sources
+      obspredtest_long <- pivot_longer(obspredtest, cols=c(5,6))
+      ggplot(obspredtest_long) + geom_density(aes(value, fill=name, color=name), alpha=0.5) + facet_wrap(~Country) + facet_wrap(~paste(Country, Biome)) + geom_vline(xintercept=0)
+      
+      
+      
+      ### EI SIIS MITÄÄN ONGELMIA VAIKKA TOKI NÄYTTÄÄ SILTÄ ETTÄ RUOTSISSA JA USASSA ON NOIN PUOLET LÄHDEHAVAINTOJA MIKÄ EI OO TILANNE MUUALLA 
+      #-> ONGELMA ON OLTAVA SIINÄ ETTÄ MINKÄLAISIA ALUEITA LÄHDE VS. NIELUHAVAINNOT NÄISSÄ PAIKOISSA KATTAA 
+      # TAI PREDIKTOREISSA ON JOTAIN ONGELMIA!!!!
+      
+      ### Final graphs for the paper: pred perf, color plots with biome, disturbance, and season across all models and model ensemble
+      # Colored by biome
+      p1 <- ggplot(obspred, aes(x=pred, y=obs, colour=factor(Biome))) +
+        geom_point(shape = 16,  size=3) + geom_abline(slope = 1) + 
+        
+        annotate(label = sprintf("\n MAE = %.1f   \n Rsquared = %.2f   \n RMSE = %.1f   \n ", 
+                                 r_stats %>% filter(model==m) %>% dplyr::select(MAE) %>% as.character() %>% as.numeric(), 
+                                 r_stats %>% filter(model==m) %>% dplyr::select(Rsquared) %>% as.numeric(),
+                                 r_stats %>% filter(model==m) %>% dplyr::select(RMSE) %>% as.numeric()), geom = "text", x = -Inf, y = Inf, size = 7, hjust = 0, vjust = 1) +
+        
+        theme_pub  + theme(legend.title=element_blank()) + scale_colour_viridis(discrete=TRUE) + xlab(m) + 
+        xlim(scale_min, scale_max) + ylim(scale_min, scale_max)
+      
+      # Print out
+      setwd("D:/repos/abcflux_modeling/results/figures/")
+      ggsave(paste(i, m, km,"loocv_predperf_biome.eps", sep="_"), device=cairo_ps, p1, width=16, height=11, units=c("cm"))
+      
+      
+      
+      
+      # Colored by disturbance
+      p1 <- ggplot(obspred, aes(x=pred, y=obs, colour=factor(Disturbance))) +
+        geom_point(shape = 16,  size=3) + geom_abline(slope = 1) + 
+        
+        annotate(label = sprintf("\n MAE = %.1f   \n Rsquared = %.2f   \n RMSE = %.1f   \n ", 
+                                 r_stats %>% filter(model==m) %>% dplyr::select(MAE) %>% as.character() %>% as.numeric(), 
+                                 r_stats %>% filter(model==m) %>% dplyr::select(Rsquared) %>% as.numeric(),
+                                 r_stats %>% filter(model==m) %>% dplyr::select(RMSE) %>% as.numeric()), geom = "text", x = -Inf, y = Inf, size = 7, hjust = 0, vjust = 1) +
+        
+        theme_pub  + theme(legend.title=element_blank()) + scale_colour_viridis(discrete=TRUE) + xlab(m) + 
+        xlim(scale_min, scale_max) + ylim(scale_min, scale_max)
+      
+      # Print out
+      setwd("D:/repos/abcflux_modeling/results/figures/")
+      ggsave(paste(i, m, km,"loocv_predperf_disturbance.eps", sep="_"), device=cairo_ps, p1, width=17, height=11, units=c("cm"))
+      
+      
+      
+      
+      # Colored by months
+      p1 <- ggplot(obspred, aes(x=pred, y=obs, colour=factor(Interval))) +
+        geom_point(shape = 16,  size=3) + geom_abline(slope = 1) + 
+        
+        annotate(label = sprintf("\n MAE = %.1f   \n Rsquared = %.2f   \n RMSE = %.1f   \n ", 
+                                 r_stats %>% filter(model==m) %>% dplyr::select(MAE) %>% as.character() %>% as.numeric(), 
+                                 r_stats %>% filter(model==m) %>% dplyr::select(Rsquared) %>% as.numeric(),
+                                 r_stats %>% filter(model==m) %>% dplyr::select(RMSE) %>% as.numeric()), geom = "text", x = -Inf, y = Inf, size = 7, hjust = 0, vjust = 1) +
+        
+        theme_pub  + theme(legend.title=element_blank()) + scale_colour_viridis(discrete=TRUE) + xlab(m) + 
+        xlim(scale_min, scale_max) + ylim(scale_min, scale_max)
+      
+      # Print out
+      setwd("D:/repos/abcflux_modeling/results/figures/")
+      ggsave(paste(i, m, km,"loocv_predperf_months.eps", sep="_"), device=cairo_ps, p1, width=15, height=11, units=c("cm"))
+      
+      
+      
+      
+      
+      # Ensemble
+      # Colored by biome
+      p1 <- ggplot(pred_ens_all, aes(x=pred_ens, y=obs, colour=factor(Biome))) +
+        geom_point(shape = 16,  size=3) + geom_abline(slope = 1) + 
+        
+        annotate(label = sprintf("\n MAE = %.1f \n Rsquared = %.2f \n RMSE = %.1f \n ", 
+                                 mae, r2, rmse), geom = "text", x = -Inf, y = Inf, size = 7, hjust = 0, vjust = 1) +
+        
+        theme_pub  + theme(legend.title=element_blank()) + scale_colour_viridis(discrete=TRUE) + xlab("ensemble") + 
+        xlim(scale_min, scale_max) + ylim(scale_min, scale_max)
+      
+      # Print out
+      setwd("D:/repos/abcflux_modeling/results/figures/")
+      ggsave(paste(i, "ensemble", km,"loocv_predperf_biome.eps", sep="_"), device=cairo_ps, p1, width=16, height=11, units=c("cm"))
+      
+      
+      
+      
+      # Colored by disturbance
+      p1 <- ggplot(pred_ens_all, aes(x=pred_ens, y=obs, colour=factor(Disturbance))) +
+        geom_point(shape = 16,  size=3) + geom_abline(slope = 1) + 
+        
+        annotate(label = sprintf("\n MAE = %.1f \n Rsquared = %.2f \n RMSE = %.1f \n ", 
+                                 mae, r2, rmse), geom = "text", x = -Inf, y = Inf, size = 7, hjust = 0, vjust = 1) +
+        
+        theme_pub  + theme(legend.title=element_blank()) + scale_colour_viridis(discrete=TRUE) + xlab(m) + 
+        xlim(scale_min, scale_max) + ylim(scale_min, scale_max)
+      
+      # Print out
+      setwd("D:/repos/abcflux_modeling/results/figures/")
+      ggsave(paste(i, "ensemble",km,"loocv_predperf_disturbance.eps", sep="_"), device=cairo_ps, p1, width=17, height=11, units=c("cm"))
+      
+      
+      
+      
+      # Colored by months
+      p1 <- ggplot(pred_ens_all, aes(x=pred_ens, y=obs, colour=factor(Interval))) +
+        geom_point(shape = 16,  size=3) + geom_abline(slope = 1) + 
+        
+        annotate(label = sprintf("\n MAE = %.1f \n Rsquared = %.2f \n RMSE = %.1f \n ", 
+                                 mae, r2, rmse), geom = "text", x = -Inf, y = Inf, size = 7, hjust = 0, vjust = 1) +
+        
+        theme_pub  + theme(legend.title=element_blank()) + scale_colour_viridis(discrete=TRUE) + xlab(m) + 
+        xlim(scale_min, scale_max) + ylim(scale_min, scale_max)
+      
+      # Print out
+      setwd("D:/repos/abcflux_modeling/results/figures/")
+      ggsave(paste(i, "ensemble", km,"loocv_predperf_months.eps", sep="_"), device=cairo_ps, p1, width=15, height=11, units=c("cm"))
+      
+      
+      print("final pred perf figures done")
+    
       
       
       
@@ -623,11 +815,15 @@ for (i in resp_vars) {
       
       
       
-      if (m=="svm") {
+      if (m=="svm" & km=="1km") {
         
         varImp <- vip::vi(mod, method="permute", train=obspred[, c(Baseline_vars_1km, Baseline_vars_1km_dummy)], target = obspred[, i], metric = "rmse",
                           pred_wrapper = predict, nsim=5) ### TEMPORARY!!!
         
+      } else if (m=="svm" & km=="20km") {
+        
+        varImp <- vip::vi(mod, method="permute", train=obspred[, c(Baseline_vars_20km, Baseline_vars_20km_dummy)], target = obspred[, i], metric = "rmse",
+                         pred_wrapper = predict, nsim=5) # only 10 most important ones selected - ask package developer if we need more
       } else {
         
         varImp <- vip::vi(mod, method="permute", train=obspred[, mod$optVariables], target = obspred[, i], metric = "rmse", # used to be Selected_vars
@@ -687,8 +883,7 @@ for (i in resp_vars) {
     all_varImp$Model <- ifelse(all_varImp$Model=="rf", "RF", all_varImp$Model)
     all_varImp$Model <- ifelse(all_varImp$Model=="svm", "SVM", all_varImp$Model) 
     all_varImp$Model <- factor(all_varImp$Model)
-    #all_varImp$Model <- factor(all_varImp$Model, levels=c("XGBOOST", "RF", "SVM"))
-    
+
     all_varImp <- all_varImp[-1, ]
     
     test <- all_varImp %>% group_by(Variable) %>% summarize(Importance_max = max(Importance, na.rm=TRUE))
@@ -697,8 +892,8 @@ for (i in resp_vars) {
     
     all_varImp$Variable2 <- factor(all_varImp$Variable, levels=unique(all_varImp$Variable[order(all_varImp$Importance_max)]))
     
-    ### SVM:Ã¤Ã¤n tuli nollia??
-    all_varImp <- subset(all_varImp, !(Model=="SVM" & Importance==0))
+    ### Some models have selected predictors that now receive an importance value of 0 -> let's keep them in the visualization
+    #all_varImp <- subset(all_varImp, !(Model=="SVM" & Importance==0))
     
     
     p1 <- ggplot(all_varImp) + geom_bar(aes(x=Variable2, y=Importance, fill=Model), stat="identity", position="dodge")  + 
@@ -707,13 +902,21 @@ for (i in resp_vars) {
              theme_pub #+ ggtitle(title2)
     
     # Print out
-    setwd("/mnt/data1/boreal/avirkkala/repos/abcflux_modeling/results/figures/")
+    setwd("D:/repos/abcflux_modeling/results/figures/")
     print(p1)
-    dev.copy(png, paste( i, km,  "vip.png", sep="_"), width=1300, height=1000)
+    dev.copy(png, paste( i, km,  "vip.png", sep="_"), width=1300, height=1100)
     dev.off()
     
     
-    write.csv(all_varImp, paste("/mnt/data1/boreal/avirkkala/repos/abcflux_modeling/results/", i, km, "vip.csv", sep="_"), row.names=FALSE)
+    
+    # EPS
+    
+    # Print out
+    setwd("D:/repos/abcflux_modeling/results/figures/")
+    ggsave(paste( i, km,  "vip.eps", sep="_"), device=cairo_ps, p1, width=35, height=23, units=c("cm"))
+    
+    
+    write.csv(all_varImp, paste("D:/repos/abcflux_modeling/results/", i, km, "vip.csv", sep="_"), row.names=FALSE)
     
     
   } # km loop done
@@ -744,9 +947,9 @@ for (i in resp_vars) {
 
 
     # models
-    gbmFit <- readRDS(paste0("/mnt/data1/boreal/avirkkala/repos/abcflux_modeling/results/", paste(i,  km, "gbm_loocv", sep="_"), ".rds"))
-    rfFit <- readRDS(paste0("/mnt/data1/boreal/avirkkala/repos/abcflux_modeling/results/", paste(i,  km, "rf_loocv", sep="_"), ".rds"))
-    svmFit <- readRDS(paste0("/mnt/data1/boreal/avirkkala/repos/abcflux_modeling/results/", paste(i,  km, "svm_loocv", sep="_"), ".rds"))
+    gbmFit <- readRDS(paste0("D:/repos/abcflux_modeling/results/", paste(i,  km, "gbm_loocv", sep="_"), ".rds"))
+    rfFit <- readRDS(paste0("D:/repos/abcflux_modeling/results/", paste(i,  km, "rf_loocv", sep="_"), ".rds"))
+    svmFit <- readRDS(paste0("D:/repos/abcflux_modeling/results/", paste(i,  km, "svm_loocv", sep="_"), ".rds"))
 
     # selected vars
     Selected_vars_gbm <- gbmFit$optVariables
@@ -758,7 +961,8 @@ for (i in resp_vars) {
     # extract the last letters of selected vars
     library("stringi")
     last <- stri_sub(Selected_vars, -1)
-    grepl("[[:digit:]]", last) # remove those! this is a dummy code issue that just arises in svm
+    last <- ifelse(last=="0", "k", last) # if ends with 0, these are actually the ndvi and tmean trend variables that we want to keep, so let's change those to letters
+    grepl("[[:digit:]]", last) # remove those! this is a dummy code issue that just arises in svm 
     Selected_vars <- Selected_vars[!grepl("[[:digit:]]", last)]
     
     nvars <- length(Selected_vars)
@@ -834,10 +1038,15 @@ for (i in resp_vars) {
       #plot(obspred$NEE_gC_m2, obspred$obs)
 
     }
+    
+    library("randomForest")
 
-    for (nvar in nvars) {
+    for (nvar in 1:nvars) {
 
       #nvar=1
+#nvar=8
+      
+      print(Selected_vars[nvar])
 
 
       if (Selected_vars[nvar] %in% Selected_vars_gbm & Selected_vars[nvar] %in% Selected_vars_rf & Selected_vars[nvar] %in% Selected_vars_svm) {
@@ -850,8 +1059,9 @@ for (i in resp_vars) {
         # ### testing
         # pd1 <- partial(gbmFit, pred.var = Selected_vars[29], train=obspred_gbm, plot = TRUE, rug=TRUE)  # don't set plot = TRUE
         # pd2 <- partial(rfFit, pred.var = Selected_vars[29], train=obspred_rf, plot = TRUE, rug=TRUE)
-        partial(svmFit, pred.var = Selected_vars[12], train=obspred_svm, plot = TRUE, rug=TRUE)
-
+        #partial(svmFit, pred.var = Selected_vars[12], train=obspred_svm, plot = TRUE, rug=TRUE)
+        #partial(rfFit, pred.var = Selected_vars_rf[29], train=obspred_rf, plot = TRUE, rug=TRUE)
+        
         # ggplot2
         pd1$Model <- "GBM"  # add new column
         pd2$Model <- "RF"
@@ -861,24 +1071,24 @@ for (i in resp_vars) {
 
         rug_data <- obspred_rf[Selected_vars[nvar]]
 
-        if (!is.factor(obspred[, Selected_vars_gbm[nvar]])) {
+        if (!is.factor(obspred_gbm[, Selected_vars[nvar]])) {
 
           pdp_plot1 <- ggplot(pd.all1, aes(x=pd.all1[, 1], y=pd.all1[, 2], color = Model)) +
-            geom_line(size=1) + theme_pub  +labs(y="yhat", x=Baseline_vars_1km[nvar]) +
+            geom_line(size=1) + theme_pub  +labs(y="yhat", x=Selected_vars[nvar]) +
             scale_color_manual(values = c(viridis(3)[3],viridis(3)[2], viridis(3)[1]), guide = guide_legend(reverse=TRUE)) +
             theme(legend.position = "none") +
             geom_rug(data=rug_data, aes(x=rug_data[, 1]), inherit.aes = FALSE) #+ geom_rug(col=rgb(.5,0,0,alpha=.2)) # + ggtitle(title)
-        } else if  (is.factor(obspred[, Selected_vars_gbm[nvar]])) {
+        } else if  (is.factor(obspred_gbm[, Selected_vars[nvar]])) {
 
           pdp_plot1 <- ggplot(pd.all1, aes(x=pd.all1[, 1], y=pd.all1[, 2], color = Model)) +
-            geom_point(size=3) + theme_pub  +labs(y="yhat", x=Baseline_vars_1km[nvar]) +
+            geom_point(size=3) + theme_pub  +labs(y="yhat", x=Selected_vars[nvar]) +
             scale_color_manual(values = c(viridis(3)[3],viridis(3)[2], viridis(3)[1]), guide = guide_legend(reverse=TRUE)) +
             theme(legend.position = "none") # + ggtitle(title)
         }
 
         print(pdp_plot1)
 
-        dev.copy(png, paste( i, km, Selected_vars[nvar],  "pdp.png", sep="_"), width=650, height=400)
+        dev.copy(png, paste( i, km, Selected_vars[nvar],  "pdp.png", sep="_"), width=600, height=400)
         dev.off()
 
 
@@ -897,23 +1107,23 @@ for (i in resp_vars) {
 
         pd.all1 <- rbind(pd1, pd2)
 
-        if (!is.factor(obspred[, Selected_vars_gbm[nvar]])) {
+        if (!is.factor(obspred_gbm[, Selected_vars[nvar]])) {
 
           pdp_plot1 <- ggplot(pd.all1, aes(x=pd.all1[, 1], y=pd.all1[, 2], color = Model)) +
-            geom_line(size=1) + theme_pub  +labs(y="yhat", x=Baseline_vars_1km[nvar]) +
+            geom_line(size=1) + theme_pub  +labs(y="yhat", x=Selected_vars[nvar]) +
             scale_color_manual(values = c(viridis(3)[3],viridis(3)[2], viridis(3)[1]), guide = guide_legend(reverse=TRUE)) +
             theme(legend.position = "none") # + ggtitle(title)
-        } else if  (is.factor(obspred[, Selected_vars_gbm[nvar]])) {
+        } else if  (is.factor(obspred_gbm[, Selected_vars[nvar]])) {
 
           pdp_plot1 <- ggplot(pd.all1, aes(x=pd.all1[, 1], y=pd.all1[, 2], color = Model)) +
-            geom_point(size=3) + theme_pub  +labs(y="yhat", x=Baseline_vars_1km[nvar]) +
+            geom_point(size=3) + theme_pub  +labs(y="yhat", x=Selected_vars[nvar]) +
             scale_color_manual(values = c(viridis(3)[3],viridis(3)[2], viridis(3)[1]), guide = guide_legend(reverse=TRUE)) +
             theme(legend.position = "none") # + ggtitle(title)
         }
 
         print(pdp_plot1)
 
-        dev.copy(png, paste( i, km, Selected_vars[nvar],  "pdp.png", sep="_"), width=650, height=400)
+        dev.copy(png, paste( i, km, Selected_vars[nvar],  "pdp.png", sep="_"), width=600, height=400)
         dev.off()
 
 
@@ -932,23 +1142,23 @@ for (i in resp_vars) {
 
         pd.all1 <- rbind(pd1)
 
-        if (!is.factor(obspred[, Selected_vars_gbm[nvar]])) {
+        if (!is.factor(obspred_gbm[, Selected_vars[nvar]])) {
 
           pdp_plot1 <- ggplot(pd.all1, aes(x=pd.all1[, 1], y=pd.all1[, 2], color = Model)) +
-            geom_line(size=1) + theme_pub  +labs(y="yhat", x=Baseline_vars_1km[nvar]) +
+            geom_line(size=1) + theme_pub  +labs(y="yhat", x=Selected_vars[nvar]) +
             scale_color_manual(values = c(viridis(3)[3],viridis(3)[2], viridis(3)[1]), guide = guide_legend(reverse=TRUE)) +
             theme(legend.position = "none") # + ggtitle(title)
-        } else if  (is.factor(obspred[, Selected_vars_gbm[nvar]])) {
+        } else if  (is.factor(obspred_gbm[, Selected_vars[nvar]])) {
 
           pdp_plot1 <- ggplot(pd.all1, aes(x=pd.all1[, 1], y=pd.all1[, 2], color = Model)) +
-            geom_point(size=3) + theme_pub  +labs(y="yhat", x=Baseline_vars_1km[nvar]) +
+            geom_point(size=3) + theme_pub  +labs(y="yhat", x=Selected_vars[nvar]) +
             scale_color_manual(values = c(viridis(3)[3],viridis(3)[2], viridis(3)[1]), guide = guide_legend(reverse=TRUE)) +
             theme(legend.position = "none") # + ggtitle(title)
         }
 
         print(pdp_plot1)
 
-        dev.copy(png, paste( i, km, Selected_vars[nvar],  "pdp.png", sep="_"), width=650, height=400)
+        dev.copy(png, paste( i, km, Selected_vars[nvar],  "pdp.png", sep="_"), width=600, height=400)
         dev.off()
 
 
@@ -968,23 +1178,23 @@ for (i in resp_vars) {
 
         pd.all1 <- rbind(pd1, pd3)
 
-        if (!is.factor(obspred[, Selected_vars_gbm[nvar]])) {
+        if (!is.factor(obspred_gbm[, Selected_vars[nvar]])) {
 
           pdp_plot1 <- ggplot(pd.all1, aes(x=pd.all1[, 1], y=pd.all1[, 2], color = Model)) +
-            geom_line(size=1) + theme_pub  +labs(y="yhat", x=Baseline_vars_1km[nvar]) +
+            geom_line(size=1) + theme_pub  +labs(y="yhat", x=Selected_vars[nvar]) +
             scale_color_manual(values = c(viridis(3)[3],viridis(3)[2], viridis(3)[1]), guide = guide_legend(reverse=TRUE)) +
             theme(legend.position = "none") # + ggtitle(title)
-        } else if  (is.factor(obspred[, Selected_vars_gbm[nvar]])) {
+        } else if  (is.factor(obspred_gbm[, Selected_vars[nvar]])) {
 
           pdp_plot1 <- ggplot(pd.all1, aes(x=pd.all1[, 1], y=pd.all1[, 2], color = Model)) +
-            geom_point(size=3) + theme_pub  +labs(y="yhat", x=Baseline_vars_1km[nvar]) +
+            geom_point(size=3) + theme_pub  +labs(y="yhat", x=Selected_vars[nvar]) +
             scale_color_manual(values = c(viridis(3)[3],viridis(3)[2], viridis(3)[1]), guide = guide_legend(reverse=TRUE)) +
             theme(legend.position = "none") # + ggtitle(title)
         }
 
         print(pdp_plot1)
 
-        dev.copy(png, paste( i, km, Selected_vars[nvar],  "pdp.png", sep="_"), width=650, height=400)
+        dev.copy(png, paste( i, km, Selected_vars[nvar],  "pdp.png", sep="_"), width=600, height=400)
         dev.off()
 
 
@@ -1003,23 +1213,23 @@ for (i in resp_vars) {
 
         pd.all1 <- rbind( pd2)
 
-        if (!is.factor(obspred[, Selected_vars_gbm[nvar]])) {
+        if (!is.factor(obspred_gbm[, Selected_vars[nvar]])) {
 
           pdp_plot1 <- ggplot(pd.all1, aes(x=pd.all1[, 1], y=pd.all1[, 2], color = Model)) +
-            geom_line(size=1) + theme_pub  +labs(y="yhat", x=Baseline_vars_1km[nvar]) +
+            geom_line(size=1) + theme_pub  +labs(y="yhat", x=Selected_vars[nvar]) +
             scale_color_manual(values = c(viridis(3)[3],viridis(3)[2], viridis(3)[1]), guide = guide_legend(reverse=TRUE)) +
             theme(legend.position = "none") # + ggtitle(title)
-        } else if  (is.factor(obspred[, Selected_vars_gbm[nvar]])) {
+        } else if  (is.factor(obspred_gbm[, Selected_vars[nvar]])) {
 
           pdp_plot1 <- ggplot(pd.all1, aes(x=pd.all1[, 1], y=pd.all1[, 2], color = Model)) +
-            geom_point(size=3) + theme_pub  +labs(y="yhat", x=Baseline_vars_1km[nvar]) +
+            geom_point(size=3) + theme_pub  +labs(y="yhat", x=Selected_vars[nvar]) +
             scale_color_manual(values = c(viridis(3)[3],viridis(3)[2], viridis(3)[1]), guide = guide_legend(reverse=TRUE)) +
             theme(legend.position = "none") # + ggtitle(title)
         }
 
         print(pdp_plot1)
 
-        dev.copy(png, paste( i, km, Selected_vars[nvar],  "pdp.png", sep="_"), width=650, height=400)
+        dev.copy(png, paste( i, km, Selected_vars[nvar],  "pdp.png", sep="_"), width=600, height=400)
         dev.off()
 
 
@@ -1037,23 +1247,23 @@ for (i in resp_vars) {
 
         pd.all1 <- rbind(pd3)
 
-        if (!is.factor(obspred[, Selected_vars_gbm[nvar]])) {
+        if (!is.factor(obspred_gbm[, Selected_vars[nvar]])) {
 
           pdp_plot1 <- ggplot(pd.all1, aes(x=pd.all1[, 1], y=pd.all1[, 2], color = Model)) +
-            geom_line(size=1) + theme_pub  +labs(y="yhat", x=Baseline_vars_1km[nvar]) +
+            geom_line(size=1) + theme_pub  +labs(y="yhat", x=Selected_vars[nvar]) +
             scale_color_manual(values = c(viridis(3)[3],viridis(3)[2], viridis(3)[1]), guide = guide_legend(reverse=TRUE)) +
             theme(legend.position = "none") # + ggtitle(title)
-        } else if  (is.factor(obspred[, Selected_vars_gbm[nvar]])) {
+        } else if  (is.factor(obspred_gbm[, Selected_vars[nvar]])) {
 
           pdp_plot1 <- ggplot(pd.all1, aes(x=pd.all1[, 1], y=pd.all1[, 2], color = Model)) +
-            geom_point(size=3) + theme_pub  +labs(y="yhat", x=Baseline_vars_1km[nvar]) +
+            geom_point(size=3) + theme_pub  +labs(y="yhat", x=Selected_vars[nvar]) +
             scale_color_manual(values = c(viridis(3)[3],viridis(3)[2], viridis(3)[1]), guide = guide_legend(reverse=TRUE)) +
             theme(legend.position = "none") # + ggtitle(title)
         }
 
         print(pdp_plot1)
 
-        dev.copy(png, paste( i, km, Selected_vars[nvar],  "pdp.png", sep="_"), width=650, height=400)
+        dev.copy(png, paste( i, km, Selected_vars[nvar],  "pdp.png", sep="_"), width=600, height=400)
         dev.off()
 
 
@@ -1072,24 +1282,26 @@ for (i in resp_vars) {
 
         pd.all1 <- rbind(pd2, pd3)
 
-        if (!is.factor(obspred[, Selected_vars_gbm[nvar]])) {
+        if (!is.factor(obspred_gbm[, Selected_vars[nvar]])) {
 
           pdp_plot1 <- ggplot(pd.all1, aes(x=pd.all1[, 1], y=pd.all1[, 2], color = Model)) +
-            geom_line(size=1) + theme_pub  +labs(y="yhat", x=Baseline_vars_1km[nvar]) +
+            geom_line(size=1) + theme_pub  +labs(y="yhat", x=Selected_vars[nvar]) +
             scale_color_manual(values = c(viridis(3)[3],viridis(3)[2], viridis(3)[1]), guide = guide_legend(reverse=TRUE)) +
             theme(legend.position = "none") # + ggtitle(title)
-        } else if  (is.factor(obspred[, Selected_vars_gbm[nvar]])) {
+        } else if  (is.factor(obspred_gbm[, Selected_vars[nvar]])) {
 
           pdp_plot1 <- ggplot(pd.all1, aes(x=pd.all1[, 1], y=pd.all1[, 2], color = Model)) +
-            geom_point(size=3) + theme_pub  +labs(y="yhat", x=Baseline_vars_1km[nvar]) +
+            geom_point(size=3) + theme_pub  +labs(y="yhat", x=Selected_vars[nvar]) +
             scale_color_manual(values = c(viridis(3)[3],viridis(3)[2], viridis(3)[1]), guide = guide_legend(reverse=TRUE)) +
             theme(legend.position = "none") # + ggtitle(title)
         }
 
         print(pdp_plot1)
 
-        dev.copy(png, paste( i, km, Selected_vars[nvar],  "pdp.png", sep="_"), width=650, height=400)
+        dev.copy(png, paste( i, km, Selected_vars[nvar],  "pdp.png", sep="_"), width=600, height=400)
         dev.off()
+        
+        print("first var done")
 
 
       } # if loop
@@ -1098,10 +1310,33 @@ for (i in resp_vars) {
 
 
     } # nvars loop
+    
+    
+    
+    
+    
+    
+    
+    # ### For the paper, visualize the 5 most important ones only
+    
+    
+    
+    
+    
 
   } # km loop
 
 } # resp vars loop
+
+
+
+
+
+
+
+
+
+
 
 
 

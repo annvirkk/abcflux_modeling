@@ -7,11 +7,11 @@ library("xgboost")
 library("parallel")
 library("doParallel")
 library("kernlab")
-library("groupdata2", lib.loc="/mnt/data1/boreal/avirkkala/packages")  
+library("groupdata2")  
 
 
 ### Load modeling data
-setwd("/mnt/data1/boreal/avirkkala/repos/flux_upscaling_data/src/")
+setwd("D:/repos/flux_upscaling_data/src/")
 d <- read.csv("../results/final/modeldata_avg.csv")
 
 
@@ -22,56 +22,8 @@ hist(d$GPP_gC_m2)
 hist(d$Reco_gC_m2)
 
 
-
-### And number of sites and obs in the different levels of the categorical variables
-unique(d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged)
-d %>% group_by(ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
-# sites with NA?
-d$Study_ID_Short[which(is.na(d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged))] 
-
-d %>% filter(!is.na(GPP_gC_m2)) %>% group_by(ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short))) # nothing from barren!
-d %>% filter(!is.na(Reco_gC_m2)) %>% group_by(ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
-d %>% filter(!is.na(NEE_gC_m2)) %>% group_by(ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
-
-
-# # NOTE NOTE! Barren obs used to be missing from GPP, and only one site in Reco but not anymore
-# d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged <- ifelse(d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged==1, 31, d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged)
-
-
-d %>% group_by(Number_of_days_since_fire_classes_MCD64A1_sites_cleaned) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
-d %>% filter(!is.na(GPP_gC_m2)) %>% group_by(Number_of_days_since_fire_classes_MCD64A1_sites_cleaned) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short))) 
-d %>% filter(!is.na(Reco_gC_m2)) %>% group_by(Number_of_days_since_fire_classes_MCD64A1_sites_cleaned) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
-d %>% filter(!is.na(NEE_gC_m2)) %>% group_by(Number_of_days_since_fire_classes_MCD64A1_sites_cleaned) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
-# not enough fire sites... merge 1-2 and 3-4!!
-d$Number_of_days_since_fire_classes_MCD64A1_sites_cleaned <- ifelse(d$Number_of_days_since_fire_classes_MCD64A1_sites_cleaned==2, 1, d$Number_of_days_since_fire_classes_MCD64A1_sites_cleaned)
-d$Number_of_days_since_fire_classes_MCD64A1_sites_cleaned <- ifelse(d$Number_of_days_since_fire_classes_MCD64A1_sites_cleaned==4, 3, d$Number_of_days_since_fire_classes_MCD64A1_sites_cleaned)
-
-
-d %>% group_by(Number_of_days_since_fire_classes_gfed_monthly_calc) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short))) # ok!
-
-
-d %>% group_by(TKWP_Thermokarst) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
-d %>% filter(!is.na(GPP_gC_m2)) %>% group_by(TKWP_Thermokarst) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short))) 
-d %>% filter(!is.na(Reco_gC_m2)) %>% group_by(TKWP_Thermokarst) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
-d %>% filter(!is.na(NEE_gC_m2)) %>% group_by(TKWP_Thermokarst) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
-unique(d$TKWP_Thermokarst)
-d %>% group_by(TKHP_Thermokarst) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
-d %>% filter(!is.na(GPP_gC_m2)) %>% group_by(TKHP_Thermokarst) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short))) 
-d %>% filter(!is.na(Reco_gC_m2)) %>% group_by(TKHP_Thermokarst) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
-d %>% filter(!is.na(NEE_gC_m2)) %>% group_by(TKHP_Thermokarst) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
-unique(d$TKHP_Thermokarst) # huom very high puuttuu!! eli se on oikein
-# enough classes!
-
-
-
-d %>% filter(!is.na(NEE_gC_m2)) %>% group_by(forest_age_class_forest_age_sites) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
-d %>% filter(!is.na(Reco_gC_m2)) %>% group_by(forest_age_class_forest_age_sites) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
-d %>% filter(!is.na(GPP_gC_m2)) %>% group_by(forest_age_class_forest_age_sites) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
-
-
-
 ### Response variables
-resp_vars <- c("NEE_gC_m2", "GPP_gC_m2", "Reco_gC_m2") 
+resp_vars <- c("GPP_gC_m2", "Reco_gC_m2", "NEE_gC_m2") 
 
 
 ### Predictors
@@ -79,13 +31,13 @@ names(d)
 
 ## List predictors for the models
 # Variables used in 1 km spatial resolution models
-Baseline_vars_1km <- c("srad_terraclimate_sites", "vpd_terraclimate_sites", "pr_terraclimate_sites", "pdsi_terraclimate_sites", "swe_terraclimate_sites", # met
+Baseline_vars_1km <- c("srad_terraclimate_sites", "vpd_terraclimate_sites", "pr_terraclimate_sites", "pdsi_terraclimate_sites", # met
                        
                        "tmean_TerraClimate_averages", "ppt_TerraClimate_averages", # climate
                        
                        "trend_20yrprior_terra_change_id",  "terra_trend_19601990", # temperature change - note that the naming convention changed a bit...
                        
-                       "ndvi_trend_10yrprior_ndvi_change_id",  "ndvi_trend_19812010", # ndvi change trend 
+                        "ndvi_trend_19812010", # ndvi change trend 
                        
                        "Barrow_CO2_conc_Barrow_CO2conc", # atmos CO2 conc
                        
@@ -127,7 +79,7 @@ Baseline_vars_1km
 
 
 # Variables used in 20 km spatial resolution models
-Baseline_vars_20km <- c("srad_terraclimate_sites", "vpd_terraclimate_sites", "pr_terraclimate_sites", "pdsi_terraclimate_sites", "tmean_terraclimate_sites", "swe_terraclimate_sites", # tmean included because don't have LST
+Baseline_vars_20km <- c("srad_terraclimate_sites", "vpd_terraclimate_sites", "pr_terraclimate_sites", "pdsi_terraclimate_sites", "tmean_terraclimate_sites",  # tmean included because don't have LST
                         
                         "tmean_TerraClimate_averages", "ppt_TerraClimate_averages", 
                         
@@ -139,7 +91,7 @@ Baseline_vars_20km <- c("srad_terraclimate_sites", "vpd_terraclimate_sites", "pr
                         
                         "Snow.cover_era5_soilmoist_temp_snow", "Snow.depth_era5_soilmoist_temp_snow", "Soil.temperature.level.1_era5_soilmoist_temp_snow", "Volumetric.soil.water.layer.1_era5_soilmoist_temp_snow", 
                         
-                        "ndvi3g_lowest_mean_GIMMS3g_NDVI_sites_high_and_low_quality",  ############### VAIHDA NIMI
+                        "ndvi3g_lowest_gapfilled_mean_GIMMS3g_NDVI_sites_low_quality_gapfilled",  
                         
                         "SMMR_SSMIS_thaw_days_NTSG_FT_SMMR_SSMIS_25km", # microwave 
                       
@@ -166,6 +118,136 @@ Baseline_vars_20km <- c("srad_terraclimate_sites", "vpd_terraclimate_sites", "pr
 # check that the columns exist
 Baseline_vars_20km %in% colnames(d)
 
+
+
+
+
+
+
+
+### Factor checks
+### number of sites and obs in the different levels of the categorical variables
+
+# NEE
+modeldata1 <- d[,c("Study_ID_Short", "id", "NEE_gC_m2", Baseline_vars_1km)]
+modeldata1 <- na.omit(modeldata1) 
+unique(modeldata1$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged)
+unique(d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged)
+modeldata1 %>% group_by(ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
+
+
+unique(modeldata1$Number_of_days_since_fire_classes_MCD64A1_sites_cleaned)
+modeldata1 %>% group_by(Number_of_days_since_fire_classes_MCD64A1_sites_cleaned) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
+
+unique(modeldata1$TKWP_Thermokarst)
+modeldata1 %>% group_by(TKWP_Thermokarst) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
+
+unique(modeldata1$TKHP_Thermokarst)
+modeldata1 %>% group_by(TKHP_Thermokarst) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
+
+unique(modeldata1$forest_age_class_forest_age_sites)
+modeldata1 %>% group_by(forest_age_class_forest_age_sites) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
+
+
+# GPP
+modeldata1 <- d[,c("Study_ID_Short", "id", "GPP_gC_m2", Baseline_vars_1km)]
+modeldata1 <- na.omit(modeldata1) 
+unique(modeldata1$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged)
+unique(d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged) 
+modeldata1 %>% group_by(ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
+# barren group missing!!
+
+unique(modeldata1$Number_of_days_since_fire_classes_MCD64A1_sites_cleaned)
+modeldata1 %>% group_by(Number_of_days_since_fire_classes_MCD64A1_sites_cleaned) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
+
+unique(modeldata1$TKWP_Thermokarst)
+modeldata1 %>% group_by(TKWP_Thermokarst) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
+
+unique(modeldata1$TKHP_Thermokarst)
+modeldata1 %>% group_by(TKHP_Thermokarst) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
+
+unique(modeldata1$forest_age_class_forest_age_sites)
+modeldata1 %>% group_by(forest_age_class_forest_age_sites) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
+
+
+
+
+
+
+# Reco
+modeldata1 <- d[,c("Study_ID_Short", "id", "Reco_gC_m2", Baseline_vars_1km)]
+modeldata1 <- na.omit(modeldata1) 
+unique(modeldata1$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged) 
+unique(d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged) 
+modeldata1 %>% group_by(ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
+# barren group missing!!
+
+unique(modeldata1$Number_of_days_since_fire_classes_MCD64A1_sites_cleaned)
+modeldata1 %>% group_by(Number_of_days_since_fire_classes_MCD64A1_sites_cleaned) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
+
+unique(modeldata1$TKWP_Thermokarst)
+modeldata1 %>% group_by(TKWP_Thermokarst) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
+
+unique(modeldata1$TKHP_Thermokarst)
+modeldata1 %>% group_by(TKHP_Thermokarst) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
+
+unique(modeldata1$forest_age_class_forest_age_sites)
+modeldata1 %>% group_by(forest_age_class_forest_age_sites) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
+
+
+
+### Factor edits
+# not enough fire sites... merge 1-2 and 3-4!!
+d$Number_of_days_since_fire_classes_MCD64A1_sites_cleaned <- ifelse(d$Number_of_days_since_fire_classes_MCD64A1_sites_cleaned==2, 1, d$Number_of_days_since_fire_classes_MCD64A1_sites_cleaned)
+d$Number_of_days_since_fire_classes_MCD64A1_sites_cleaned <- ifelse(d$Number_of_days_since_fire_classes_MCD64A1_sites_cleaned==4, 3, d$Number_of_days_since_fire_classes_MCD64A1_sites_cleaned)
+
+# not enough cavm observations for GPP and Reco... merge class 1 (barren) and 31 (prostrate shrub)
+d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged <- ifelse(d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged==1, 31, d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged)
+
+
+
+
+# d %>% filter(!is.na(GPP_gC_m2)) %>% group_by(ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short))) # nothing from barren!
+# d %>% filter(!is.na(Reco_gC_m2)) %>% group_by(ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
+# d %>% filter(!is.na(NEE_gC_m2)) %>% group_by(ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
+# 
+# 
+# d %>% filter(!is.na(NEE_gC_m2)) %>% group_by(ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
+# 
+# 
+# # # NOTE NOTE! Barren obs used to be missing from GPP, and only one site in Reco but not anymore
+# # d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged <- ifelse(d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged==1, 31, d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged)
+# 
+# 
+# d %>% group_by(Number_of_days_since_fire_classes_MCD64A1_sites_cleaned) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
+# d %>% filter(!is.na(GPP_gC_m2)) %>% group_by(Number_of_days_since_fire_classes_MCD64A1_sites_cleaned) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short))) 
+# d %>% filter(!is.na(Reco_gC_m2)) %>% group_by(Number_of_days_since_fire_classes_MCD64A1_sites_cleaned) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
+# d %>% filter(!is.na(NEE_gC_m2)) %>% group_by(Number_of_days_since_fire_classes_MCD64A1_sites_cleaned) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
+# 
+# 
+# d %>% group_by(Number_of_days_since_fire_classes_gfed_monthly_calc) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short))) # ok!
+# 
+# 
+# d %>% group_by(TKWP_Thermokarst) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
+# d %>% filter(!is.na(GPP_gC_m2)) %>% group_by(TKWP_Thermokarst) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short))) 
+# d %>% filter(!is.na(Reco_gC_m2)) %>% group_by(TKWP_Thermokarst) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
+# d %>% filter(!is.na(NEE_gC_m2)) %>% group_by(TKWP_Thermokarst) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
+# unique(d$TKWP_Thermokarst)
+# d %>% group_by(TKHP_Thermokarst) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
+# d %>% filter(!is.na(GPP_gC_m2)) %>% group_by(TKHP_Thermokarst) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short))) 
+# d %>% filter(!is.na(Reco_gC_m2)) %>% group_by(TKHP_Thermokarst) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
+# d %>% filter(!is.na(NEE_gC_m2)) %>% group_by(TKHP_Thermokarst) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
+# unique(d$TKHP_Thermokarst) # huom very high puuttuu!! eli se on oikein
+# # enough classes!
+# 
+# 
+# 
+# d %>% filter(!is.na(NEE_gC_m2)) %>% group_by(forest_age_class_forest_age_sites) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
+# d %>% filter(!is.na(Reco_gC_m2)) %>% group_by(forest_age_class_forest_age_sites) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
+# d %>% filter(!is.na(GPP_gC_m2)) %>% group_by(forest_age_class_forest_age_sites) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
+
+
+
 # variables as factors
 d$TKWP_Thermokarst <- as.factor(d$TKWP_Thermokarst)
 d$TKHP_Thermokarst <- as.factor(d$TKHP_Thermokarst)
@@ -173,6 +255,7 @@ d$Number_of_days_since_fire_classes_gfed_monthly_calc <- as.factor(d$Number_of_d
 d$Number_of_days_since_fire_classes_MCD64A1_sites_cleaned <- as.factor(d$Number_of_days_since_fire_classes_MCD64A1_sites_cleaned)
 d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged <- as.factor(d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged)
 d$forest_age_class_forest_age_sites <- as.factor(d$forest_age_class_forest_age_sites)
+d$Study_ID_Short <- as.factor(d$Study_ID_Short)
 # (note that if you would use dummy variables those would not need to be factors)
 
 
@@ -181,12 +264,145 @@ d$forest_age_class_forest_age_sites <- as.factor(d$forest_age_class_forest_age_s
 
 
 
+### For svm, need to calculate dummy variables NO NON NO NÄÄ VOIKIN POISTAA
+### Factor conversions - uncommented because not needed anymore! just need to code as.factor
+# note that randomForest and svmRadial can handle variables coded as "as.factor"
+# but xgboost cannot: https://github.com/dmlc/xgboost/issues/95
+# so we will need to do one-hot encoding
+
+# Thermokarst
+d <- as.data.frame(d)
+d$TKWP_Thermokarst<- factor(d$TKWP_Thermokarst)
+onehot <- model.matrix(~0+d[, 'TKWP_Thermokarst'])
+attr(onehot, "dimnames")[[2]] <- paste("TKWP_Thermokarst", levels(d$TKWP_Thermokarst), sep="_")
+d <- cbind(d, onehot)
+
+d <- as.data.frame(d)
+d$TKHP_Thermokarst<- factor(d$TKHP_Thermokarst)
+onehot <- model.matrix(~0+d[, 'TKHP_Thermokarst'])
+attr(onehot, "dimnames")[[2]] <- paste("TKHP_Thermokarst", levels(d$TKHP_Thermokarst), sep="_")
+d <- cbind(d, onehot)
+
+# land cover 
+d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged <- factor(d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged)
+onehot <- model.matrix(~0+d[, 'ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged'])
+attr(onehot, "dimnames")[[2]] <- paste("ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged", levels(d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged), sep="_")
+d <- cbind(d, onehot)
+
+# Fire burn classes
+d$Number_of_days_since_fire_classes_MCD64A1_sites_cleaned <- factor(d$Number_of_days_since_fire_classes_MCD64A1_sites_cleaned)
+onehot <- model.matrix(~0+d[, 'Number_of_days_since_fire_classes_MCD64A1_sites_cleaned'])
+attr(onehot, "dimnames")[[2]] <- paste("Number_of_days_since_fire_classes_MCD64A1_sites_cleaned", levels(d$Number_of_days_since_fire_classes_MCD64A1_sites_cleaned), sep="_")
+d <- cbind(d, onehot)
+
+d$Number_of_days_since_fire_classes_gfed_monthly_calc <- factor(d$Number_of_days_since_fire_classes_gfed_monthly_calc)
+onehot <- model.matrix(~0+d[, 'Number_of_days_since_fire_classes_gfed_monthly_calc'])
+attr(onehot, "dimnames")[[2]] <- paste("Number_of_days_since_fire_classes_gfed_monthly_calc", levels(d$Number_of_days_since_fire_classes_gfed_monthly_calc), sep="_")
+d <- cbind(d, onehot)
 
 
-### Set up clusters for parallel processing 
-cluster <- makeCluster(detectCores()) # keep all - Kubernetes uses 7 cores per run
+d$forest_age_class_forest_age_sites <- factor(d$forest_age_class_forest_age_sites)
+onehot <- model.matrix(~0+d[, 'forest_age_class_forest_age_sites'])
+attr(onehot, "dimnames")[[2]] <- paste("forest_age_class_forest_age_sites", levels(d$forest_age_class_forest_age_sites), sep="_")
+d <- cbind(d, onehot)
+
+
+## List predictors for the models
+# Variables used in 1 km spatial resolution models
+Baseline_vars_1km <- c("srad_terraclimate_sites", "vpd_terraclimate_sites", "pr_terraclimate_sites", "pdsi_terraclimate_sites", # met
+                       
+                       "tmean_TerraClimate_averages", "ppt_TerraClimate_averages", # climate
+                       
+                       "trend_20yrprior_terra_change_id",  "terra_trend_19601990", # temperature change - note that the naming convention changed a bit...
+                       
+                        "ndvi_trend_19812010", # ndvi change trend 
+                       
+                       "Barrow_CO2_conc_Barrow_CO2conc", # atmos CO2 conc
+                       
+                       "Snow.cover_era5_soilmoist_temp_snow", "Snow.depth_era5_soilmoist_temp_snow", "Soil.temperature.level.1_era5_soilmoist_temp_snow", "Volumetric.soil.water.layer.1_era5_soilmoist_temp_snow", #era5 here
+                       
+                       "NDVI_whittaker_constant_monthly_mean", # Optical RS, dropped several because highly correlated
+                       
+                       "LST_Day_1km_MOD11A2v006_LST_Day_sites_low_quality", # surface temp
+                       
+                       "water_ground_MCD43A4_annual_water_ground_sites_low_quality", "water_vegetation_MCD43A4_annual_water_vegetation_sites_low_quality", # wetness
+                       
+                       "dtm_cti_merit.dem_m_250m_s0..0cm_2018_v1.0_MERIT_topo_indices_250m", "dtm_rough.scale_merit.dem_m_250m_s0..0cm_2018_v1.0_MERIT_topo_indices_250m", # topo
+                       
+                       "aboveground_biomass_carbon_2010_Above_belowground_biomass", "belowground_biomass_carbon_2010_Above_belowground_biomass", # c stocks
+                       
+                       "Percent_NonTree_Vegetation_MOD44B_sites", "Percent_NonVegetated_MOD44B_sites", "Percent_Tree_Cover_MOD44B_sites", # veg cover
+                       
+                       "ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged", # veg type
+                       
+                       "PHIHOX_M_sl1_250m_ll_SoilGrids", "BLDFIE_M_sl1_250m_ll_SoilGrids", "SoilGrids_SOC_SoilGrids_SOCstock", 
+                       "sol_watercontent.1500kPa_usda.3c2a1a_m_250m_b0..0cm_1950..2017_v0.1_SoilGrids_watercontent", # soil variables
+                       
+                       "UiO_PEX_PERPROB_5.0_20181128_2000_2016_NH_UiO_PEX_20181128_2000_2016_NH", # Permafrost (static)
+                       
+                       "Number_of_days_since_fire_classes_MCD64A1_sites_cleaned",   # time since fire
+
+                       "TKWP_Thermokarst", "TKHP_Thermokarst", # themokarst vulnerability 
+                       
+                       "forest_age_class_forest_age_sites" # forest age
+                      
+                       
+)
+
+# check that the columns exist
+Baseline_vars_1km %in% colnames(d)
+Baseline_vars_1km
+
+
+
+
+# Variables used in 20 km spatial resolution models
+Baseline_vars_20km <- c("srad_terraclimate_sites", "vpd_terraclimate_sites", "pr_terraclimate_sites", "pdsi_terraclimate_sites", "tmean_terraclimate_sites",  # tmean included because don't have LST
+                        
+                        "tmean_TerraClimate_averages", "ppt_TerraClimate_averages", 
+                        
+                        "trend_20yrprior_terra_change_id",  "terra_trend_19601990", 
+                        
+                        "ndvi_trend_19812010", # note cannot have ndvi prior to 10 yrs because no data from 1979
+                        
+                        "Barrow_CO2_conc_Barrow_CO2conc",
+                        
+                        "Snow.cover_era5_soilmoist_temp_snow", "Snow.depth_era5_soilmoist_temp_snow", "Soil.temperature.level.1_era5_soilmoist_temp_snow", "Volumetric.soil.water.layer.1_era5_soilmoist_temp_snow", 
+                        
+                        "ndvi3g_lowest_gapfilled_mean_GIMMS3g_NDVI_sites_low_quality_gapfilled",  
+                        
+                        "SMMR_SSMIS_thaw_days_NTSG_FT_SMMR_SSMIS_25km", # microwave 
+                      
+                        "dtm_cti_merit.dem_m_250m_s0..0cm_2018_v1.0_MERIT_topo_indices_250m", "dtm_rough.scale_merit.dem_m_250m_s0..0cm_2018_v1.0_MERIT_topo_indices_250m", 
+                        
+                        "aboveground_biomass_carbon_2010_Above_belowground_biomass", "belowground_biomass_carbon_2010_Above_belowground_biomass",
+                        
+                        "Percent_NonTree_Vegetation_AVHRR_VCF5KYR", "Percent_TreeCover_AVHRR_VCF5KYR", "Percent_NonVegetated_AVHRR_VCF5KYR", # equivalent to MOD tree cover product
+                        
+                        "ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged", 
+                        
+                        "PHIHOX_M_sl1_250m_ll_SoilGrids", "BLDFIE_M_sl1_250m_ll_SoilGrids", "SoilGrids_SOC_SoilGrids_SOCstock", 
+                        "sol_watercontent.1500kPa_usda.3c2a1a_m_250m_b0..0cm_1950..2017_v0.1_SoilGrids_watercontent",  
+                        
+                        "UiO_PEX_PERPROB_5.0_20181128_2000_2016_NH_UiO_PEX_20181128_2000_2016_NH", 
+                        
+                        "Number_of_days_since_fire_classes_gfed_monthly_calc",  
+                        
+                        "TKWP_Thermokarst", "TKHP_Thermokarst", 
+                        
+                        "forest_age_class_forest_age_sites"
+)
+
+# check that the columns exist
+Baseline_vars_20km %in% colnames(d)
+
+
+
+### Set up clusters for parallel processing
+cluster <- makeCluster(detectCores()-7) # -7 for other models
 registerDoParallel(cluster)
 # see the tutorial here: https://rpubs.com/lgreski/improvingCaretPerformance
+
 
 
 ### Start looping through the response variables ###
@@ -205,13 +421,31 @@ for (flux in resp_vars) {
   sapply(modeldata1, function(x) sum(is.na(x))) # no missing data
   print("1 km data set:")
   print(nrow(modeldata1))
+  #check that factors are truly factors
+  print(str(modeldata1))
+  
+  # which sites are left out?
+  dropped <- modeldata2[!(complete.cases(modeldata2)), ]
+  year <- subset(d, select=c(id, Meas_year))
+  dropped <- merge(dropped, year, by="id")
+  print("dropped data from the following sites:")
+  print(unique(dropped$Study_ID_Short)) # related to NDVI data, soil data, MOD44b data, and ERA5 land data gaps
   
   
-  modeldata2 <- d[,c("Study_ID_Short", "id", flux, Baseline_vars_20km)]
-  modeldata2 <- na.omit(modeldata2)
+  modeldata3 <- d[,c("Study_ID_Short", "id", flux, Baseline_vars_20km)]
+  modeldata2 <- na.omit(modeldata3)
   sapply(modeldata2, function(x) sum(is.na(x))) # no missing data
   print("20 km data set:")
   print(nrow(modeldata2))
+  #check that factors are truly factors
+  print(str(modeldata2))
+  
+  # which sites are left out?
+  dropped <- modeldata3[!(complete.cases(modeldata3)), ]
+  year <- subset(d, select=c(id, Meas_year))
+  dropped <- merge(dropped, year, by="id")
+  print("dropped data from the following sites:")
+  print(unique(dropped$Study_ID_Short))
   
   
   
@@ -303,50 +537,7 @@ for (flux in resp_vars) {
   names(indices2) <- 1:length(indices2)
   names(indices_not2) <- 1:length(indices2)
   
-  
-  
-  # Check factor levels (thermokarst, fire, veg type) in different subsets
-  for (ii in 1:10) {
-    
-    # ii <- 7
-    # subset to training and test data
-    train1 <- modeldata1[indices_not1[[ii]] ,]
-    test1 <- modeldata1[indices1[[ii]] ,]
-    
-    ### Check that the values in test data are also in training data
-    # Thermokarst
-    print(unique(test1$Thermokarst) %in% unique(train1$Thermokarst))
-    
-    
-    # Fire
-    print(unique(test1$Number_of_days_since_fire_classes_MCD64A1_sites_cleaned) %in% unique(train1$Number_of_days_since_fire_classes_MCD64A1_sites_cleaned))
-    
-    
-    # ESA CCI veg type
-    print(unique(test1$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged) %in% unique(train1$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged))
-    
-    
-    ### And same for modeldata2 and other two variables....
-    # subset to training and test data
-    train1 <- modeldata2[indices_not1[[ii]] ,]
-    test1 <- modeldata2[indices1[[ii]] ,]
-    
-    
-    ### Check that the values in test data are also in training data
-    # Thermokarst
-    print(unique(test1$Thermokarst) %in% unique(train1$Thermokarst))
-    
-    # Fire
-    print(unique(test1$Number_of_days_since_fire_classes_gfed_monthly_calc) %in% unique(train1$Number_of_days_since_fire_classes_gfed_monthly_calc))
-    
-    
-    # ESA CCI veg type
-    print(unique(test1$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged) %in% unique(train1$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged))
-    
-  }
-  
-  
-  
+
   
   print("model tuning and feature selection starting")
   
@@ -399,16 +590,16 @@ for (flux in resp_vars) {
   # https://stats.stackexchange.com/questions/323356/index-argument-with-createfolds-in-traincontrol-caret-package
 
 
-  
-  # Note that it's important to differentiate between formula and non-formula formulations: 
+
+  # Note that it's important to differentiate between formula and non-formula formulations:
   # https://stackoverflow.com/questions/22200923/different-results-with-formula-and-non-formula-for-caret-training?fbclid=IwAR0d1bTb07FZzVojdlClemMmgMUhJk02Z_8uGRyKTYM8BBHGLtstJfuicVE
   # For gbm and rf I'm using the non-formula method (without ~) where dummy variables for factors are not created (because trees can handle these in their own way)
   # But for svm I'm using the formula method, so categorical variables are transformed to dummies
-  
+
   ### run the RFE and model tuning algorithm with 1 km predictors
   set.seed(448)
   rfe_fit = rfe(modeldata1[,Baseline_vars_1km], modeldata1[,flux],
-                sizes = c(40, 35, 30, 25, 20, 15), # a numeric vector of integers corresponding to the number of features that should be retained
+                sizes = c(35, 30, 25, 20, 15, 10), # a numeric vector of integers corresponding to the number of features that should be retained
                 rfeControl = rfecontrol1, # rfe parameters
                 method="gbm") # modeling method
                 #trControl=tunecontrol1) # tuning parameters - not needed
@@ -417,22 +608,22 @@ for (flux in resp_vars) {
   print("1 km rfe and tuning done")
 
   ### Write the model out
-  saveRDS(rfe_fit, paste0("/mnt/data1/boreal/avirkkala/repos/abcflux_modeling/results/", paste(flux, "1km_gbm_loocv",  sep="_"), ".rds"))
+  saveRDS(rfe_fit, paste0("D:/repos/abcflux_modeling/results/", paste(flux, "1km_gbm_loocv",  sep="_"), ".rds"))
 
-  
-  # # TEMPORARY
-  # ### run the RFE and model tuning algorithm with 20 km predictors
-  # set.seed(448)
-  # rfe_fit2 = rfe(modeldata2[,Baseline_vars_20km], modeldata2[,flux],
-  #               sizes = c(35, 30, 25, 20, 15),
-  #               rfeControl = rfecontrol2,
-  #               method="gbm")
-  # 
-  # 
-  # print("20 km rfe and tuning done")
-  # 
-  # ### Write the model out
-  # saveRDS(rfe_fit2, paste0("/mnt/data1/boreal/avirkkala/repos/abcflux_modeling/results/", paste(flux, "20km_gbm_loocv", sep="_"), ".rds"))
+
+  # TEMPORARY
+  ### run the RFE and model tuning algorithm with 20 km predictors
+  set.seed(448)
+  rfe_fit2 = rfe(modeldata2[,Baseline_vars_20km], modeldata2[,flux],
+                sizes = c(34, 30, 25, 20, 15, 10),
+                rfeControl = rfecontrol2,
+                method="gbm")
+
+
+  print("20 km rfe and tuning done")
+
+  ### Write the model out
+  saveRDS(rfe_fit2, paste0("D:/repos/abcflux_modeling/results/", paste(flux, "20km_gbm_loocv", sep="_"), ".rds"))
 
   print("gbm done, moving on to rf")
 
@@ -471,7 +662,7 @@ for (flux in resp_vars) {
   ### run the RFE and model tuning algorithm with 1 km predictors
   set.seed(448)
   rfe_fit = rfe(modeldata1[,Baseline_vars_1km], modeldata1[,flux],
-                sizes = c(40, 35, 30, 25, 20, 15), # a numeric vector of integers corresponding to the number of features that should be retained
+                sizes = c(35, 30, 25, 20, 15, 10), # a numeric vector of integers corresponding to the number of features that should be retained
                 rfeControl = rfecontrol1, # rfe parameters
                 method="ranger") # modeling method
 
@@ -479,90 +670,90 @@ for (flux in resp_vars) {
   print("1 km rfe and tuning done")
 
   ### Write the model out
-  saveRDS(rfe_fit, paste0("/mnt/data1/boreal/avirkkala/repos/abcflux_modeling/results/", paste(flux, "1km_rf_loocv",  sep="_"), ".rds"))
+  saveRDS(rfe_fit, paste0("D:/repos/abcflux_modeling/results/", paste(flux, "1km_rf_loocv",  sep="_"), ".rds"))
 
-  
-# # TEMPORARY
-# ### run the RFE and model tuning algorithm with 20 km predictors
-# set.seed(448)
-# rfe_fit2 = rfe(modeldata2[,Baseline_vars_20km], modeldata2[,flux],
-#                sizes = c(35, 30, 25, 20, 15),
-#                rfeControl = rfecontrol2,
-#                method="ranger")
-# 
-# 
-#   print("20 km rfe and tuning done")
-# 
-#   ### Write the model out
-#   saveRDS(rfe_fit2, paste0("/mnt/data1/boreal/avirkkala/repos/abcflux_modeling/results/", paste(flux, "20km_rf_loocv", sep="_"), ".rds"))
 
-  
+# TEMPORARY
+### run the RFE and model tuning algorithm with 20 km predictors
+set.seed(448)
+rfe_fit2 = rfe(modeldata2[,Baseline_vars_20km], modeldata2[,flux],
+               sizes = c(34, 30, 25, 20, 15, 10),
+               rfeControl = rfecontrol2,
+               method="ranger")
+
+
+  print("20 km rfe and tuning done")
+
+  ### Write the model out
+  saveRDS(rfe_fit2, paste0("D:/repos/abcflux_modeling/results/", paste(flux, "20km_rf_loocv", sep="_"), ".rds"))
+
+
   print("rf done, moving on to svm")
   
   
-  
+
   ### SVM - I had some issues with the model formulations but these should work now
 
-  
+
   # Control parameters
   rfecontrol1 <- rfeControl(functions=caretFuncs, #caret-specific rfe process functions - there are e.g. lmFuncs too that are specific to one model type
                             method = "cv",  # No need to specify this because we use index column which automatically does leave-site/group-out CV
                             # and no need to specify number or repeats either
                             returnResamp = "final", # A character string indicating how much of the resampled summary metrics should be saved. We only save the final model
                             # p = 0.7, # For leave-group out cross-validation: the training percentage. No need to worry about this since we use pre-defined indices
-                            #summaryFunction = defaultSummary, # a function to compute performance metrics across resamples. 
+                            #summaryFunction = defaultSummary, # a function to compute performance metrics across resamples.
                             #selectionFunction = "best", #  chooses the tuning parameter associated with the largest (or lowest for "RMSE") performance.
                             index = indices_not1, # a list with elements for each external resampling iteration. Each list element is the sample rows used for training at that iteration.
                             indexOut = indices1, # a list (the same length as index) that dictates which sample are held-out for each resample.
                             allowParallel = TRUE,  # parallel processing
                             saveDetails =TRUE) # a logical to save the predictions and variable importances from the selection process
-  
+
   # caretFuncs should work, see here: https://rdrr.io/cran/caret/man/rfe.html
-  
+
   rfecontrol2 <- rfeControl(functions=caretFuncs, #caret-specific rfe process functions - there are e.g. lmFuncs too that are specific to one model type
                             method = "cv",  # No need to specify this because we use index column which automatically does leave-site/group-out CV
                             # and no need to specify number or repeats either
                             returnResamp = "final", # A character string indicating how much of the resampled summary metrics should be saved. We only save the final model
                             # p = 0.7, # For leave-group out cross-validation: the training percentage. No need to worry about this since we use pre-defined indices
-                            #summaryFunction = defaultSummary, # a function to compute performance metrics across resamples. 
+                            #summaryFunction = defaultSummary, # a function to compute performance metrics across resamples.
                             #selectionFunction = "best", #  chooses the tuning parameter associated with the largest (or lowest for "RMSE") performance.
                             index = indices_not2, # a list with elements for each external resampling iteration. Each list element is the sample rows used for training at that iteration.
                             indexOut = indices2, # a list (the same length as index) that dictates which sample are held-out for each resample.
                             allowParallel = TRUE,  # parallel processing
                             saveDetails =TRUE) # a logical to save the predictions and variable importances from the selection process
-  
-  
+
+
   ### run the RFE and model tuning algorithm with 1 km predictors
   set.seed(448)
   rfe_fit = rfe(as.formula(paste(flux, "~", paste(Baseline_vars_1km, collapse="+"))),
-                  sizes = c(40, 35, 30, 25, 20, 15), # a numeric vector of integers corresponding to the number of features that should be retained
+                  sizes = c(35, 30, 25, 20, 15, 10), # a numeric vector of integers corresponding to the number of features that should be retained
                   rfeControl = rfecontrol1, # rfe parameters
                   method="svmRadial", data=modeldata1) # tested several other svm approaches but this one seemed to be the best
-  
-  # note: used the formula (y~k+s...) instead of non-formula structure (data[y], data[k, s]) for svm because the non-formula resulted in errors. 
-  
+
+  # note: used the formula (y~k+s...) instead of non-formula structure (data[y], data[k, s]) for svm because the non-formula resulted in errors.
+
   print("1 km rfe and tuning done")
-  
+
   ### Write the model out
-  saveRDS(rfe_fit, paste0("/mnt/data1/boreal/avirkkala/repos/abcflux_modeling/results/", paste(flux, "1km_svm_loocv",  sep="_"), ".rds"))
-  
-  
+  saveRDS(rfe_fit, paste0("D:/repos/abcflux_modeling/results/", paste(flux, "1km_svm_loocv",  sep="_"), ".rds"))
+
+
   # # TEMPORARY
-  # ### run the RFE and model tuning algorithm with 20 km predictors
-  # set.seed(448)
-  # rfe_fit2 = rfe(as.formula(paste(flux, "~", paste(Baseline_vars_20km, collapse="+"))),
-  #                 sizes = c(35, 30, 25, 20, 15), # a numeric vector of integers corresponding to the number of features that should be retained
-  #                 rfeControl = rfecontrol2, # rfe parameters
-  #                 method="svmRadial", data=modeldata2)
-  # 
-  # 
-  # print("20 km rfe and tuning done")
-  # 
-  # ### Write the model out
-  # saveRDS(rfe_fit2, paste0("/mnt/data1/boreal/avirkkala/repos/abcflux_modeling/results/", paste(flux, "20km_svm_loocv", sep="_"), ".rds"))
-  # 
+  ### run the RFE and model tuning algorithm with 20 km predictors
+  set.seed(448)
+  rfe_fit2 = rfe(as.formula(paste(flux, "~", paste(Baseline_vars_20km, collapse="+"))),
+                  sizes = c(34, 30, 25, 20, 15, 10), # a numeric vector of integers corresponding to the number of features that should be retained
+                  rfeControl = rfecontrol2, # rfe parameters
+                  method="svmRadial", data=modeldata2)
+
+
+  print("20 km rfe and tuning done")
+
+  ### Write the model out
+  saveRDS(rfe_fit2, paste0("D:/repos/abcflux_modeling/results/", paste(flux, "20km_svm_loocv", sep="_"), ".rds"))
+
   
 }
 
 
-
+stopCluster(cluster)

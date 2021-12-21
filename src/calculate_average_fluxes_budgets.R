@@ -13,8 +13,8 @@ d <- read.csv("../results/final/modeldata_avg.csv", stringsAsFactors = F)
 
 
 # RANDOM VISUALIZATIONS, CAN BE REMOVED
-d1 <- d %>% group_by(Study_ID_Short, Biome, Meas_year, Country) %>% summarize(n=n(), NEE_gC_m2=sum(NEE_gC_m2), GPP_gC_m2=sum(GPP_gC_m2), Reco_gC_m2=sum(Reco_gC_m2)) %>% filter(n==12)
-d2 <- d1 %>% group_by(Study_ID_Short, Biome, Country) %>% summarize(NEE_gC_m2=mean(NEE_gC_m2, na.rm=TRUE), GPP_gC_m2=mean(GPP_gC_m2, na.rm=TRUE), Reco_gC_m2=mean(Reco_gC_m2, na.rm=TRUE))
+d1 <- d %>% group_by(Study_ID_Short, Biome, Veg_type_Short, Meas_year, Country) %>% summarize(n=n(), NEE_gC_m2=sum(NEE_gC_m2), GPP_gC_m2=sum(GPP_gC_m2), Reco_gC_m2=sum(Reco_gC_m2)) %>% filter(n==12)
+d2 <- d1 %>% group_by(Study_ID_Short, Biome, Veg_type_Short, Country) %>% summarize(NEE_gC_m2=mean(NEE_gC_m2, na.rm=TRUE), GPP_gC_m2=mean(GPP_gC_m2, na.rm=TRUE), Reco_gC_m2=mean(Reco_gC_m2, na.rm=TRUE))
 
 
 theme_pub <- theme_bw() + theme(panel.border=element_rect(size=1, colour="black"),
@@ -25,14 +25,22 @@ theme_pub <- theme_bw() + theme(panel.border=element_rect(size=1, colour="black"
                                 strip.text.x = element_text(size = 14, face="bold"),
                                 legend.text=element_text(size=14, face="bold"), legend.title=element_text(size=14))
 
-ggplot(d2) + geom_violin(aes(y=NEE_gC_m2, x=Biome)) + theme_pub + geom_hline(yintercept=0, color="grey") + ylab(expression(paste("NEE g C m"^{-2}, yr^{-1})))
+ggplot(d2) + geom_boxplot(aes(y=NEE_gC_m2, x=Biome)) + geom_jitter(aes(y=NEE_gC_m2, x=Biome))  + theme_pub + geom_hline(yintercept=0, color="grey") + ylab(expression(paste("NEE g C m"^{-2}, yr^{-1})))
 
 d2$Region <- NA
 d2$Region <- ifelse(d2$Country=="Canada" | d2$Country=="Alaska" | d2$Country=="USA", "North America", d2$Region)
 d2$Region <- ifelse(d2$Country=="Russia" | d2$Country=="Mongolia", "Russia", d2$Region)
 d2$Region <- ifelse(is.na(d2$Region), "Europe", d2$Region)
 
-ggplot(d2) + geom_violin(aes(y=NEE_gC_m2, x=Biome)) + facet_grid(~Region) + geom_hline(yintercept=0, color="grey")  + ylab(expression(paste("NEE g C m"^{-2}, yr^{-1}))) + theme_pub
+factor(d2$Veg_type_Short)
+d2 <- subset(d2, !is.na(NEE_gC_m2))
+ggplot(d2) + geom_boxplot(aes(y=NEE_gC_m2, x=Biome), outlier.shape = NA) + geom_jitter(aes(y=NEE_gC_m2, x=Biome, color=Veg_type_Short), size=3) + facet_grid(~Region) + 
+  geom_hline(yintercept=0, color="grey")  + ylab(expression(paste("NEE g C m"^{-2}, yr^{-1}))) + theme_pub +
+  scale_color_manual(values = c("grey", "blue", "lightgreen", "orange", "darkgreen", "yellow", "#5e0087", "#c34b00", "lightblue"))
+
+
+ggplot(d2) + geom_boxplot(aes(y=NEE_gC_m2, x=Veg_type_Short)) + geom_jitter(aes(y=NEE_gC_m2, x=Biome)) + facet_grid(~Region) + geom_hline(yintercept=0, color="grey")  + ylab(expression(paste("NEE g C m"^{-2}, yr^{-1}))) + theme_pub
+
 
 ### In-situ data averages: annual and seasonal, add number of obs and sites
 
@@ -322,6 +330,661 @@ biomecontinentprop1 <- prop_category(d, "Biome_continent")
 
 
 ### Load rasters and calculate average
+
+
+
+
+# mosaic one example year: 2001
+
+# mosaicking files in R using terra has memory issues, so using gdal instead: https://stackoverflow.com/questions/15876591/merging-multiple-rasters-in-r
+library(gdalUtils)
+library(rgdal)
+library("stringi")
+
+
+rasters <- list.files("/mnt/data1/boreal/avirkkala/abcflux_modeling/predictions_1km", pattern=".tif$", full.names=TRUE)
+rasters <- rasters[stri_detect_fixed(rasters,c("2001"))]
+
+# # time periods
+# time <- seq(as.Date("2001/01/01"), as.Date("2020/12/31"), "months")
+# time <- substr(time, 1, 7)
+# time <- sub("-", "_", sub("_", "", time, fixed=TRUE), fixed=TRUE)
+# time_alt <- gsub("_0", "_", time)
+
+time <- seq(1, 12, by=1) %>% as.character()
+time <- c(paste0("0", time[1:9]), time[10:12])
+time <- paste0("_", time)
+
+
+flux <- c("NEE_gC_m2", "GPP_gC_m2", "Reco_gC_m2") 
+
+
+
+for (i in flux) {
+  
+  # i <- "NEE_gC_m2"
+  
+  for (t in time) {
+    
+    print(i); print(t)
+    
+    # t <- "_07"
+    gbms <- rasters[stri_detect_fixed(rasters,t) & stri_detect_fixed(rasters,i) & stri_detect_fixed(rasters,"gbm")]
+    
+    # # test
+    # r <- rast(gbms[2])
+    # NAflag(r) <- -2147483648
+    # plot(r/1000)
+    
+    # mosaic
+    mosaic_rasters(gdalfile=gbms,dst_dataset=paste0("/mnt/data1/boreal/avirkkala/abcflux_modeling/predictions_1km_mosaic/", paste(i, "1km_gbm_2001", substring(t, 2),  "loocv", sep="_"), ".tif"),of="GTiff")
+    
+    rfs <- rasters[stri_detect_fixed(rasters,t) & stri_detect_fixed(rasters,i) & stri_detect_fixed(rasters,"rf")]
+    mosaic_rasters(gdalfile=rfs,dst_dataset=paste0("/mnt/data1/boreal/avirkkala/abcflux_modeling/predictions_1km_mosaic/", paste(i, "1km_rf_2001", substring(t, 2),  "loocv", sep="_"), ".tif"),of="GTiff")
+    
+    svms <- rasters[stri_detect_fixed(rasters,t) & stri_detect_fixed(rasters,i) & stri_detect_fixed(rasters,"svm")]
+    mosaic_rasters(gdalfile=svms,dst_dataset=paste0("/mnt/data1/boreal/avirkkala/abcflux_modeling/predictions_1km_mosaic/", paste(i, "1km_svm_2001", substring(t, 2),  "loocv", sep="_"), ".tif"),of="GTiff")
+  
+}
+
+}
+
+
+
+
+## And 2011?
+
+rasters <- list.files("/mnt/data1/boreal/avirkkala/abcflux_modeling/predictions_1km", pattern=".tif$", full.names=TRUE)
+rasters <- rasters[stri_detect_fixed(rasters,c("2011"))]
+
+# # time periods
+# time <- seq(as.Date("2001/01/01"), as.Date("2020/12/31"), "months")
+# time <- substr(time, 1, 7)
+# time <- sub("-", "_", sub("_", "", time, fixed=TRUE), fixed=TRUE)
+# time_alt <- gsub("_0", "_", time)
+
+time <- seq(1, 12, by=1) %>% as.character()
+time <- c(paste0("0", time[1:9]), time[10:12])
+time <- paste0("_", time)
+
+
+flux <- c("NEE_gC_m2", "GPP_gC_m2", "Reco_gC_m2") 
+
+
+
+for (i in flux) {
+  
+  # i <- "NEE_gC_m2"
+  
+  for (t in time) {
+    
+    print(i); print(t)
+    
+    # t <- "_07"
+
+    rfs <- rasters[stri_detect_fixed(rasters,t) & stri_detect_fixed(rasters,i) & stri_detect_fixed(rasters,"rf")]
+    mosaic_rasters(gdalfile=rfs,dst_dataset=paste0("/mnt/data1/boreal/avirkkala/abcflux_modeling/predictions_1km_mosaic/", paste(i, "1km_rf_2011", substring(t, 2),  "loocv", sep="_"), ".tif"),of="GTiff")
+    
+
+  }
+  
+}
+
+
+
+
+
+
+
+## And 2018?
+
+rasters <- list.files("/mnt/data1/boreal/avirkkala/abcflux_modeling/predictions_1km", pattern=".tif$", full.names=TRUE)
+rasters <- rasters[stri_detect_fixed(rasters,c("2018"))]
+
+# # time periods
+# time <- seq(as.Date("2001/01/01"), as.Date("2020/12/31"), "months")
+# time <- substr(time, 1, 7)
+# time <- sub("-", "_", sub("_", "", time, fixed=TRUE), fixed=TRUE)
+# time_alt <- gsub("_0", "_", time)
+
+time <- seq(1, 12, by=1) %>% as.character()
+time <- c(paste0("0", time[1:9]), time[10:12])
+time <- paste0("_", time)
+
+
+flux <- c("NEE_gC_m2", "GPP_gC_m2", "Reco_gC_m2") 
+
+
+
+for (i in flux) {
+  
+  # i <- "NEE_gC_m2"
+  
+  for (t in time) {
+    
+    print(i); print(t)
+    
+    # t <- "_07"
+    
+    rfs <- rasters[stri_detect_fixed(rasters,t) & stri_detect_fixed(rasters,i) & stri_detect_fixed(rasters,"rf")]
+    mosaic_rasters(gdalfile=rfs,dst_dataset=paste0("/mnt/data1/boreal/avirkkala/abcflux_modeling/predictions_1km_mosaic/", paste(i, "1km_rf_2018", substring(t, 2),  "loocv", sep="_"), ".tif"),of="GTiff")
+    
+    
+  }
+  
+}
+
+
+
+
+
+
+
+
+## Visualize
+
+vegtype <- rast("/mnt/data1/boreal/avirkkala/abcflux_modeling/masking_summary_rasters/ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_northpolelambert1km_tundraboreal_attfix.tif")
+maskfile <- rast("/mnt/data1/boreal/avirkkala/abcflux_modeling/predictors_1km/ndvi_2019_4.tif")
+s <- vect("/mnt/data1/boreal/avirkkala/abcflux_modeling/masking_summary_rasters/Ecoregions2017_tundraboreal.shp")
+s2 <- terra::project(s, "+proj=laea +lat_0=90 +lon_0=0 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs ")
+s2 <- 
+
+mrasters <- list.files("/mnt/data1/boreal/avirkkala/abcflux_modeling/predictions_1km_mosaic/", pattern=".tif$", full.names = TRUE)
+mrasters <- mrasters[stri_detect_fixed(mrasters,"2001")]
+
+
+library("terra")
+terraOptions(memfrac=0.9, tempdir = "/mnt/data1/boreal/avirkkala/Temp")
+
+
+for (i in flux) {
+  
+  #i <- "NEE_gC_m2"
+  gbm <- mrasters[stri_detect_fixed(mrasters,"gbm") & stri_detect_fixed(mrasters,i)]
+  gbm1 <- rast(gbm)
+  NAflag(gbm1) <- -2147483648
+  gbm1 <- gbm1/1000
+  gbm1[gbm1==0] <- NA # be careful with this!
+  writeRaster(gbm1, "/mnt/data1/boreal/avirkkala/abcflux_modeling/predictions_1km_mosaic/visualization/NEE_gC_m2_1km_gbm_2001_loocv.tif", overwrite=TRUE)
+  plot(gbm1)
+  
+  
+  
+  
+  
+  gbm <- mrasters[stri_detect_fixed(mrasters,"rf") & stri_detect_fixed(mrasters,i)]
+  gbm1 <- rast(gbm)
+  NAflag(gbm1) <- -2147483648
+  gbm1 <- gbm1/1000
+  gbm1[gbm1==0] <- NA # be careful with this!
+  writeRaster(gbm1, "/mnt/data1/boreal/avirkkala/abcflux_modeling/predictions_1km_mosaic/visualization/NEE_gC_m2_1km_rf_2001_loocv.tif", overwrite=TRUE)
+  plot(gbm1)
+  
+  
+  
+  gbm <- mrasters[stri_detect_fixed(mrasters,"svm") & stri_detect_fixed(mrasters,i)]
+  gbm1 <- rast(gbm)
+  NAflag(gbm1) <- -2147483648
+  gbm1 <- gbm1/1000
+  gbm1[gbm1==0] <- NA # be careful with this!
+  writeRaster(gbm1, "/mnt/data1/boreal/avirkkala/abcflux_modeling/predictions_1km_mosaic/visualization/NEE_gC_m2_1km_svm_2001_loocv.tif", overwrite=TRUE)
+  plot(gbm1)
+  
+  r2 <- rast("/mnt/data1/boreal/avirkkala/abcflux_modeling/predictions_1km_mosaic/visualization/NEE_gC_m2_1km_rf_2001_loocv.tif")
+  r1 <- rast("/mnt/data1/boreal/avirkkala/abcflux_modeling/predictions_1km_mosaic/visualization/NEE_gC_m2_1km_svm_2001_loocv.tif")
+  r3 <- rast("/mnt/data1/boreal/avirkkala/abcflux_modeling/predictions_1km_mosaic/visualization/NEE_gC_m2_1km_gbm_2001_loocv.tif")
+  
+  sum2 <- sum(r2)
+  plot(sum2)
+  
+  var <- terra::spatSample(sum2, 10000, "random")
+  hist(var[, 1])
+  mean(var[, 1], na.rm=TRUE)
+  
+  d1 <- d %>% group_by(Study_ID_Short, Meas_year, Latitude, Longitude) %>% summarize(n=n(), NEE_gC_m2=sum(NEE_gC_m2), GPP_gC_m2=sum(GPP_gC_m2), Reco_gC_m2=sum(Reco_gC_m2)) %>% filter(n==12)
+  d2 <- d1 %>% filter(Meas_year==2001) %>% group_by(Study_ID_Short, Latitude, Longitude) %>% summarize(NEE_gC_m2=mean(NEE_gC_m2, na.rm=TRUE), GPP_gC_m2=mean(GPP_gC_m2, na.rm=TRUE), Reco_gC_m2=mean(Reco_gC_m2, na.rm=TRUE))
+  
+  hist(d1$NEE_gC_m2)
+  mean(d1$NEE_gC_m2, na.rm=TRUE)
+  
+  ve <- vect(d2, geom=c("Longitude", "Latitude"))
+  crs(ve) <- "+proj=longlat +datum=WGS84"
+  ve2 <- terra::project(ve, sum2)
+  
+  e <- terra::extract(sum2, ve2)
+  
+  plot(y=e$sum, x=d2$NEE_gC_m2, xlab="obs", ylab="pred"); abline(0,1) # overestimates source!
+  
+  
+  
+  
+  
+  sum2 <- sum(r1)
+  plot(sum2)
+  
+  var <- terra::spatSample(sum2, 10000, "random")
+  hist(var[, 1])
+  mean(var[, 1], na.rm=TRUE)
+
+  ve <- vect(d2, geom=c("Longitude", "Latitude"))
+  crs(ve) <- "+proj=longlat +datum=WGS84"
+  ve2 <- terra::project(ve, sum2)
+  
+  e <- terra::extract(sum2, ve2)
+  
+  plot(y=e$sum, x=d2$NEE_gC_m2, xlab="obs", ylab="pred"); abline(0,1) # slightly overestimates source
+  
+  
+  
+  sum2 <- sum(r3) ### SUPER WRONG!!!!
+  plot(sum2)
+  
+  var <- terra::spatSample(sum2, 10000, "random")
+  hist(var[, 1])
+  mean(var[, 1], na.rm=TRUE)
+  
+  ve <- vect(d2, geom=c("Longitude", "Latitude"))
+  crs(ve) <- "+proj=longlat +datum=WGS84"
+  ve2 <- terra::project(ve, sum2)
+  
+  e <- terra::extract(sum2, ve2)
+  
+  plot(y=e$sum, x=d2$NEE_gC_m2, xlab="obs", ylab="pred"); abline(0,1) # slightly overestimates source
+  
+  
+  
+  sum2 <- rast("/mnt/data1/boreal/avirkkala/abcflux_modeling/predictions_1km_mosaic/visualization/NEE_annual_withoutgbm.tif")
+  
+  
+  var <- terra::spatSample(sum2, 10000, "random")
+  hist(var[, 1])
+  mean(var[, 1], na.rm=TRUE)
+  
+  ve <- vect(d2, geom=c("Longitude", "Latitude"))
+  crs(ve) <- "+proj=longlat +datum=WGS84"
+  ve2 <- terra::project(ve, sum2)
+  
+  e <- terra::extract(sum2, ve2)
+  
+  plot(y=e$sum, x=d2$NEE_gC_m2, xlab="obs", ylab="pred"); abline(0,1) # slightly overestimates source
+  
+  
+  
+  sum2 <- rast("/mnt/data1/boreal/avirkkala/abcflux_modeling/predictions_1km_mosaic/visualization/NEE_annual.tif")
+  
+  
+  var <- terra::spatSample(sum2, 10000, "random")
+  hist(var[, 1])
+  mean(var[, 1], na.rm=TRUE)
+  
+  ve <- vect(d2, geom=c("Longitude", "Latitude"))
+  crs(ve) <- "+proj=longlat +datum=WGS84"
+  ve2 <- terra::project(ve, sum2)
+  
+  e <- terra::extract(sum2, ve2)
+  
+  plot(y=e$sum, x=d2$NEE_gC_m2, xlab="obs", ylab="pred"); abline(0,1) # slightly overestimates source
+  
+  
+  
+  
+  
+  
+  for (k in 1:12) {
+    
+    print(k)
+    r11 <- r1[[k]]
+    r22 <- r2[[k]]
+
+    r <- c(r11, r22)
+    
+    ens <- median(r, na.rm=FALSE)
+    writeRaster(ens, paste0("/mnt/data1/boreal/avirkkala/abcflux_modeling/predictions_1km_mosaic/visualization/NEE_gC_m2_1km_2001_", k, "ensemble_loocv_withoutgbm.tif"), overwrite=TRUE)
+    
+    rm(r11); rm(r22);  rm(r); rm(ens)
+    
+    
+    
+  }
+  
+  
+  
+  
+  mrasters <- list.files("/mnt/data1/boreal/avirkkala/abcflux_modeling/predictions_1km_mosaic/visualization/", pattern="ensemble_loocv_withoutgbm.tif$", full.names = TRUE)
+  r <- rast(mrasters)
+  r2 <- sum(r)
+  writeRaster(r2, "/mnt/data1/boreal/avirkkala/abcflux_modeling/predictions_1km_mosaic/visualization/NEE_annual_withoutgbm.tif", overwrite=TRUE)
+  
+  r3 <- r[[8:12]]
+  r4 <- sum(r3)
+  writeRaster(r4, "/mnt/data1/boreal/avirkkala/abcflux_modeling/predictions_1km_mosaic/visualization/NEE_gs_withoutgbm.tif", overwrite=TRUE)
+  
+  
+  r3 <- r[[1:7]]
+  r4 <- sum(r3)
+  writeRaster(r4, "/mnt/data1/boreal/avirkkala/abcflux_modeling/predictions_1km_mosaic/visualization/NEE_ngs_withoutgbm.tif", overwrite=TRUE)
+  
+  
+  r3 <- r[[9:11]]
+  r4 <- sum(r3)
+  writeRaster(r4, "/mnt/data1/boreal/avirkkala/abcflux_modeling/predictions_1km_mosaic/visualization/NEE_summer_withoutgbm.tif", overwrite=TRUE)
+  
+  
+  r3 <- c(r[[9]], r[[1:2]])
+  r4 <- sum(r3)
+  writeRaster(r4, "/mnt/data1/boreal/avirkkala/abcflux_modeling/predictions_1km_mosaic/visualization/NEE_autumn_withoutgbm.tif", overwrite=TRUE)
+  
+  r3 <- c(r[[3:5]])
+  r4 <- sum(r3)
+  writeRaster(r4, "/mnt/data1/boreal/avirkkala/abcflux_modeling/predictions_1km_mosaic/visualization/NEE_winter_withoutgbm.tif", overwrite=TRUE)
+  
+  r3 <- c(r[[6:8]])
+  r4 <- sum(r3)
+  writeRaster(r4, "/mnt/data1/boreal/avirkkala/abcflux_modeling/predictions_1km_mosaic/visualization/NEE_spring_withoutgbm.tif", overwrite=TRUE)
+  
+  
+  
+  
+  
+  for (k in 1:12) {
+    
+    print(k)
+    r11 <- r1[[k]]
+    r22 <- r2[[k]]
+    r33 <- r3[[k]]
+    
+    r <- c(r11, r22, r33)
+    
+    ens <- median(r, na.rm=FALSE)
+    writeRaster(ens, paste0("/mnt/data1/boreal/avirkkala/abcflux_modeling/predictions_1km_mosaic/visualization/NEE_gC_m2_1km_gbm_2001_", k, "ensemble_loocv.tif"), overwrite=TRUE)
+    
+    rm(r11); rm(r22); rm(r33); rm(r); rm(ens)
+    
+    
+    
+  }
+  
+  
+  
+  
+  mrasters <- list.files("/mnt/data1/boreal/avirkkala/abcflux_modeling/predictions_1km_mosaic/visualization/", pattern="ensemble_loocv.tif$", full.names = TRUE)
+  r <- rast(mrasters)
+  r2 <- sum(r)
+  writeRaster(r2, "/mnt/data1/boreal/avirkkala/abcflux_modeling/predictions_1km_mosaic/visualization/NEE_annual.tif", overwrite=TRUE)
+  
+  r3 <- r[[8:12]]
+  r4 <- sum(r3)
+  writeRaster(r4, "/mnt/data1/boreal/avirkkala/abcflux_modeling/predictions_1km_mosaic/visualization/NEE_gs.tif", overwrite=TRUE)
+  
+  
+  r3 <- r[[1:7]]
+  r4 <- sum(r3)
+  writeRaster(r4, "/mnt/data1/boreal/avirkkala/abcflux_modeling/predictions_1km_mosaic/visualization/NEE_ngs.tif", overwrite=TRUE)
+  
+  
+  r3 <- r[[9:11]]
+  r4 <- sum(r3)
+  writeRaster(r4, "/mnt/data1/boreal/avirkkala/abcflux_modeling/predictions_1km_mosaic/visualization/NEE_summer.tif", overwrite=TRUE)
+  
+  
+  r3 <- c(r[[9]], r[[1:2]])
+  r4 <- sum(r3)
+  writeRaster(r4, "/mnt/data1/boreal/avirkkala/abcflux_modeling/predictions_1km_mosaic/visualization/NEE_autumn.tif", overwrite=TRUE)
+  
+  r3 <- c(r[[3:5]])
+  r4 <- sum(r3)
+  writeRaster(r4, "/mnt/data1/boreal/avirkkala/abcflux_modeling/predictions_1km_mosaic/visualization/NEE_winter.tif", overwrite=TRUE)
+  
+  r3 <- c(r[[6:8]])
+  r4 <- sum(r3)
+  writeRaster(r4, "/mnt/data1/boreal/avirkkala/abcflux_modeling/predictions_1km_mosaic/visualization/NEE_spring.tif", overwrite=TRUE)
+  
+  
+  
+  # visualize interannual var
+  var <- terra::spatSample(r, 10000, "random")
+  sources(r)
+  names(var) <- c("Oct", "Nov", "Dec", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "July", "Aug", "Sep")
+  var2 <- na.omit(var)
+  
+  library("dplyr")
+  dd <- pivot_longer(var2, 1:12)
+  dd$name <- factor(dd$name, levels=c( "Jan", "Feb", "Mar", "Apr", "May", "Jun", "July", "Aug", "Sep","Oct", "Nov", "Dec"))
+  
+  ggplot(dd) + geom_boxplot(aes(x=name, y=value))
+  
+  ggplot(subset(d, !is.na(NEE_gC_m2))) + geom_boxplot(aes(x=factor(Interval), y=NEE_gC_m2))
+  
+  
+  
+  ens <- median(x, na.rm=FALSE)
+
+  
+  
+  
+  
+  x <- crop(gbm1, ext(s2))
+  gbm1 <- mask(gbm1, mask=vegtype,
+               filename="/mnt/data1/boreal/avirkkala/abcflux_modeling/predictions_1km_mosaic/visualization/NEE_gC_m2_1km_gbm_2001_loocv.tif", overwrite=TRUE)
+  
+  
+  plot(gbm1/1000)
+  
+  gbm <- mrasters[stri_detect_fixed(mrasters,"gbm") & stri_detect_fixed(mrasters,i)]
+  gbm1 <- rast(gbm[1])
+  NAflag(gbm1) <- -2147483648
+  gbm1[gbm1==0] <- NA # be careful with this!
+  plot(gbm1/1000)
+  
+  
+  
+  
+  gbm <- mrasters[stri_detect_fixed(mrasters,"rf") & stri_detect_fixed(mrasters,i)]
+  gbm1 <- rast(gbm[7])
+  NAflag(gbm1) <- -2147483648
+  gbm1[gbm1==0] <- NA # be careful with this!
+  plot(gbm1/1000)
+  
+  gbm <- mrasters[stri_detect_fixed(mrasters,"rf") & stri_detect_fixed(mrasters,i)]
+  gbm1 <- rast(gbm[1])
+  NAflag(gbm1) <- -2147483648
+  gbm1[gbm1==0] <- NA # be careful with this!
+  plot(gbm1/1000)
+  
+  
+  
+  gbm <- mrasters[stri_detect_fixed(mrasters,"svm") & stri_detect_fixed(mrasters,i)]
+  gbm1 <- rast(gbm[7])
+  NAflag(gbm1) <- -2147483648
+  gbm1[gbm1==0] <- NA # be careful with this!
+  plot(gbm1/1000)
+  
+  gbm <- mrasters[stri_detect_fixed(mrasters,"svm") & stri_detect_fixed(mrasters,i)]
+  gbm1 <- rast(gbm[1])
+  NAflag(gbm1) <- -2147483648
+  gbm1[gbm1==0] <- NA # be careful with this!
+  plot(gbm1/1000)
+  
+  
+  # color
+  library("viridis")
+  coltb <- data.frame(t(col2rgb(viridis(6, end=.9), alpha=TRUE)))
+  coltb
+  coltab(gbm1) <- coltb
+  
+  plot(gbm1/1000, type="interval")
+  
+  # coltb <- data.frame(t(col2rgb(viridis(6, end=.9), alpha=TRUE)))
+  # coltb
+  # coltab(r) <- coltb
+  # 
+  # plot(r)
+  # coltab(r) <- coltb
+  # plot(r)
+  
+  rf <- mrasters[stri_detect_fixed(mrasters,"rf")]
+  rf <- rast(rf)
+  
+  svm <- mrasters[stri_detect_fixed(mrasters,"svm")]
+  svm <- rast(svm)
+  
+  
+  
+  
+  
+  
+  
+  
+  ### SAME FOR GPP and Reco
+  i <- "GPP_gC_m2"
+  gbm <- mrasters[stri_detect_fixed(mrasters,"rf") & stri_detect_fixed(mrasters,i)]
+  gbm1 <- rast(gbm[c(1:9, 11:13)])
+  NAflag(gbm1) <- -2147483648
+  gbm1 <- gbm1/1000
+  gbm1[gbm1==0] <- NA # be careful with this!
+  writeRaster(gbm1, "/mnt/data1/boreal/avirkkala/abcflux_modeling/predictions_1km_mosaic/visualization/GPP_gC_m2_1km_rf_2001_loocv.tif", overwrite=TRUE)
+  plot(gbm1)
+  
+  gbm_sum <- sum(gbm1)
+  
+  
+  
+  
+  i <- "Reco_gC_m2"
+  gbm <- mrasters[stri_detect_fixed(mrasters,"rf") & stri_detect_fixed(mrasters,i)]
+  gbm1 <- rast(gbm[c(1:9, 11:13)])
+  NAflag(gbm1) <- -2147483648
+  gbm1 <- gbm1/1000
+  gbm1[gbm1==0] <- NA # be careful with this!
+  writeRaster(gbm1, "/mnt/data1/boreal/avirkkala/abcflux_modeling/predictions_1km_mosaic/visualization/Reco_gC_m2_1km_rf_2001_loocv.tif", overwrite=TRUE)
+  plot(gbm1)
+  
+  gbm2_sum <- sum(gbm1)
+  
+  plot(gbm_sum)
+  plot(gbm2_sum)
+  
+  nee_ind <- gbm2_sum+gbm_sum
+  
+  plot(nee_ind)
+  
+  writeRaster(nee_ind, "/mnt/data1/boreal/avirkkala/abcflux_modeling/predictions_1km_mosaic/visualization/Reco_gC_m2_minus_GPP_1km_rf_2001_loocv.tif", overwrite=TRUE)
+  
+  
+}
+
+
+
+i <- "NEE_gC_m2"
+
+mrasters <- list.files("/mnt/data1/boreal/avirkkala/abcflux_modeling/predictions_1km_mosaic/", pattern=".tif$", full.names = TRUE)
+mrasters <- mrasters[stri_detect_fixed(mrasters,"2011")]
+
+gbm <- mrasters[stri_detect_fixed(mrasters,"rf") & stri_detect_fixed(mrasters,i)]
+gbm1 <- rast(gbm)
+NAflag(gbm1) <- -2147483648
+gbm1 <- gbm1/1000
+gbm1[gbm1==0] <- NA # be careful with this!
+#writeRaster(gbm1, "/mnt/data1/boreal/avirkkala/abcflux_modeling/predictions_1km_mosaic/visualization/NEE_gC_m2_1km_rf_2001_loocv.tif", overwrite=TRUE)
+#plot(gbm1)
+
+nee <- sum(gbm1)
+plot(nee)
+
+writeRaster(nee, "/mnt/data1/boreal/avirkkala/abcflux_modeling/predictions_1km_mosaic/visualization/NEE_gC_m2_1km_rf_2011_sum_loocv.tif", overwrite=TRUE)
+
+
+
+
+
+
+i <- "NEE_gC_m2"
+
+mrasters <- list.files("/mnt/data1/boreal/avirkkala/abcflux_modeling/predictions_1km_mosaic/", pattern=".tif$", full.names = TRUE)
+mrasters <- mrasters[stri_detect_fixed(mrasters,"2018")]
+
+gbm <- mrasters[stri_detect_fixed(mrasters,"rf") & stri_detect_fixed(mrasters,i)]
+gbm1 <- rast(gbm)
+NAflag(gbm1) <- -2147483648
+gbm1 <- gbm1/1000
+gbm1[gbm1==0] <- NA # be careful with this!
+#writeRaster(gbm1, "/mnt/data1/boreal/avirkkala/abcflux_modeling/predictions_1km_mosaic/visualization/NEE_gC_m2_1km_rf_2001_loocv.tif", overwrite=TRUE)
+#plot(gbm1)
+
+nee <- sum(gbm1)
+plot(nee)
+
+writeRaster(nee, "/mnt/data1/boreal/avirkkala/abcflux_modeling/predictions_1km_mosaic/visualization/NEE_gC_m2_1km_rf_2018_sum_loocv.tif", overwrite=TRUE)
+
+
+
+# explore change: 2001 vs 2011
+r1 <- rast("/mnt/data1/boreal/avirkkala/abcflux_modeling/predictions_1km_mosaic/visualization/NEE_annual_withoutgbm.tif")
+r11 <- rast("/mnt/data1/boreal/avirkkala/abcflux_modeling/predictions_1km_mosaic/visualization/NEE_gC_m2_1km_rf_2011_sum_loocv.tif")
+
+change <- r11-r1
+writeRaster(change, "/mnt/data1/boreal/avirkkala/abcflux_modeling/predictions_1km_mosaic/visualization/2011_2001_change.tif")
+
+# 2001 vs 2011 vs 2018
+
+r18 <- rast("/mnt/data1/boreal/avirkkala/abcflux_modeling/predictions_1km_mosaic/visualization/NEE_gC_m2_1km_rf_2018_sum_loocv.tif")
+r1a <- crop(r1, r18)
+change2 <- r18-r1a
+plot(change2)
+
+r1a <- crop(r1, r18)
+r11a <- crop(r11, r18)
+st <- c(r1a, r11a, r18)
+
+df <- as.data.frame(st, xy=TRUE)
+
+# library("zyp")
+# 
+# t <- zyp.trend.dataframe(df, 2, method=c("yuepilon"),
+#                     conf.intervals=TRUE, preserve.range.for.sig.test=TRUE)
+# 
+# 
+# df2 <- pivot_longer(df, c(3:5))
+# 
+# df2$year <- ifelse()
+
+df$slope <- apply(df[3:5], 1, function(x) coef(lm(x ~ seq(x)))[2])
+
+
+### OLD
+for (i in flux) {
+  
+  gbm <- mrasters[stri_detect_fixed(mrasters,"gbm") & stri_detect_fixed(mrasters,i)]
+  gbm <- rast(gbm[7])
+  NAflag(gbm) <- -2147483648
+  NAflag(gbm) <- 0
+  NAflag(gbm) <- -2.147e+09
+  
+  gbm[gbm > 12087] <- NA
+  summary(values(gbm))
+  plot(gbm/1000)
+  
+  
+  
+  m <- c(-300000000000000, -2.147e+08, NA, 
+         0, 0, NA)
+  rclmat <- matrix(m, ncol=3, byrow=TRUE)
+  rc1 <- classify(gbm, rclmat, include.lowest=TRUE)
+  plot(rc1/1000)
+  
+  
+  rf <- mrasters[stri_detect_fixed(mrasters,"rf")]
+  rf <- rast(rf)
+  
+  svm <- mrasters[stri_detect_fixed(mrasters,"svm")]
+  svm <- rast(svm)
+  
+}
+
+  
+
+
+
 
 # as a test case we'll use the simplemodel
 # fluxes need to be divided by 1000
