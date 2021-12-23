@@ -364,7 +364,7 @@ Soil.temperature.level.1_era5_soilmoist_temp_snow <- mean(rast(r)/100)
 soiltemp <- extract(Soil.temperature.level.1_era5_soilmoist_temp_snow, sp)
 
 r <- rasters[grepl( "tmean_", rasters)]
-tmean_terraclimate_sites  <- mean(rast(r)/100)
+tmean_terraclimate_sites  <- mean(rast(r)/10)
 tmean <- extract(tmean_terraclimate_sites, sp)
 
 r <- rasters[grepl( "vpd", rasters)]
@@ -526,7 +526,7 @@ Soil.temperature.level.1_era5_soilmoist_temp_snow <- mean(rast(r)/100)
 soiltemp <- extract(Soil.temperature.level.1_era5_soilmoist_temp_snow, sp)
 
 r <- rasters[grepl( "tmean_", rasters)]
-tmean_terraclimate_sites  <- mean(rast(r)/100)
+tmean_terraclimate_sites  <- mean(rast(r)/10)
 tmean <- extract(tmean_terraclimate_sites, sp)
 
 r <- rasters[grepl( "vpd", rasters)]
@@ -684,7 +684,7 @@ Soil.temperature.level.1_era5_soilmoist_temp_snow <- mean(rast(r)/100)
 soiltemp <- extract(Soil.temperature.level.1_era5_soilmoist_temp_snow, sp)
 
 r <- rasters[grepl( "tmean_", rasters)]
-tmean_terraclimate_sites  <- mean(rast(r)/100)
+tmean_terraclimate_sites  <- mean(rast(r)/10)
 tmean <- extract(tmean_terraclimate_sites, sp)
 
 r <- rasters[grepl( "vpd", rasters)]
@@ -844,7 +844,7 @@ Soil.temperature.level.1_era5_soilmoist_temp_snow <- mean(rast(r)/100)
 soiltemp <- extract(Soil.temperature.level.1_era5_soilmoist_temp_snow, sp)
 
 r <- rasters[grepl( "tmean_", rasters)]
-tmean_terraclimate_sites  <- mean(rast(r)/100)
+tmean_terraclimate_sites  <- mean(rast(r)/10)
 tmean <- extract(tmean_terraclimate_sites, sp)
 
 r <- rasters[grepl( "vpd", rasters)]
@@ -1003,7 +1003,7 @@ Soil.temperature.level.1_era5_soilmoist_temp_snow <- mean(rast(r)/100)
 soiltemp <- extract(Soil.temperature.level.1_era5_soilmoist_temp_snow, sp)
 
 r <- rasters[grepl( "tmean_", rasters)]
-tmean_terraclimate_sites  <- mean(rast(r)/100)
+tmean_terraclimate_sites  <- mean(rast(r)/10)
 tmean <- extract(tmean_terraclimate_sites, sp)
 
 r <- rasters[grepl( "vpd", rasters)]

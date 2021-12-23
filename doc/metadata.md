@@ -3,10 +3,10 @@ All file paths are relative to the project root.
 
 The order to run the scripts: model tuning -> model exploration -> model prediction -> model prediction output exploration
 
-Datasets that are needed to run the scripts are located in Cloudops: 
+Datasets that are needed to run the scripts are located in Cloudops:\
 Model training data: /mnt/data1/boreal/avirkkala/repos/flux_upscaling_data/results/final/modeldata_avg.csv\
 Predictors: /mnt/data1/boreal/avirkkala/abcflux_modeling/predictors_1km and /mnt/data1/boreal/avirkkala/abcflux_modeling/predictors_8km\
-Additional spatial datasets for zonal stats etc: /mnt/data1/boreal/avirkkala/abcflux_modeling/masking_summary_rasters\
+Additional spatial datasets for zonal stats etc: /mnt/data1/boreal/avirkkala/abcflux_modeling/masking_summary_rasters
 
 ## src
 
@@ -19,8 +19,8 @@ Note that 1 and 8 km models have almost identical set of predictors, however NDV
 Script done and ran on the desktop server 12/2021.
 
 ##### Outputs in the results folder
-Caret model files saved in .rds format
-e.g. NEE_gC_m2_1km_qrf_train_loocv.rds: NEE response variable, 1 km model, qrf model, tuned using the train comment (feature selection command rfe not used), validated based on leave one site out cross validation
+Caret model files saved in .rds format\
+e.g. NEE_gC_m2_1km_qrf_train_loocv.rds: NEE response variable, 1 km model, qrf model, tuned using the train command (feature selection command rfe not used), validated based on leave one site out cross validation
 
 #### Quantile random forest regression with different subsets of the data  - [src/final_qrf_caret_runs_LOOCV_datasubsets](../src/final_qrf_caret_runs_LOOCV_datasubsets)
 This code tunes several models for each response variable and spatial resolution based on leave-one-site-out CV and RMSE using different subsets of model training data (i.e. sensitivity tests).
@@ -28,8 +28,7 @@ The goal is to understand how different flux measurement methods and disturbed s
 Script done and ran on the desktop server 12/2021.
 
 ##### Outputs in the results folder
-Caret model files saved in .rds format
-Similar naming logic as in above, but subsets defined after the more general model description:\
+Caret model files saved in .rds format. Similar naming logic as in above, but subsets defined after the more general model description:\
 full_model_without_larvaloutbreak - all the predictors included, larval outbreak chamber measurements removed from model training data\
 full_model_without_vegtype - full model training dataset used, vegetation type removed\
 nofactors_model_with_econly - all the predictors that are continuous included (categorical variables not included because these different subsets do not have data from all factor levels), only EC fluxes included\
@@ -58,13 +57,13 @@ Script done and ran on the desktop server 12/2021.
 ##### Outputs in the results/final folder
 Predictive performance figures have the word prefperd in the filename plus some descriptive information on what was visualized (LOOCV results).\
 Variable importance figures have the word vip in the filename.\
-Partial dependence figures always include the word pdp and the predictor name.\
+Partial dependence figures always include the word pdp and the predictor name.
 
 results folder includes the variable improtance scores table for each model
 
 #### Quantile random forest regression visualization: predictive performance, variable importance, and partial dependence plots - [src/final_qrf_predperf_LOOCV_datasubsets](../src/final_qrf_predperf_LOOCV_datasubsets)
-This code visualizes the model performance and behaviour of the model trained without larval outbreak chamber measurements.\
-Script done and ran on the desktop server 12/2021.
+This code visualizes the model performance and behaviour of the model trained without larval outbreak chamber measurements. \
+Script done and ran on the desktop server 12/2021. If understanding the different model predictions is challenging, this script might need to be edited so that it produces the figures for all the models trained with different subsets.
 
 #### Quantile random forest regression exploration: predictive performance of the models trained with different subsets  - [src/summarize_predictive_performance_from_sensitivitytests](../src/summarize_predictive_performance_from_sensitivitytests)
 This code prints the CV performance estimates of all the trained qrf models. \
@@ -76,11 +75,11 @@ Script done and ran on CloudOps 12/2021 to extract some estimates, should probab
 
 #### Predict at 8 km resolution from 1982 to 2016 with the models trained with the full dataset - [src/final_qrf_8km_predictions_LOOCV](../src/final_qrf_8km_predictions_LOOCV)
 This code gathers the predictor rasters resampled to 8 km resolution, loads the 8 km model trained in ../src/final_qrf_caret_runs_LOOCV, loops through each year and month and predicts fluxes across the domain.
-Each predictor and its unit should be explained in the code. Predictor rasters are in North Pole Lambert Azimuthal Equal Area projection.
+Each predictor and its unit should have been explained in the code. Predictor rasters are in North Pole Lambert Azimuthal Equal Area projection.
 Note that the different predictors that were resampled and scaled so that they can be saved as integer tifs first need to be divided by the scaling factor to get back to the same scale used in flux model training data (this is done in the code).
 Also note that NA values of the resampled rasters were sometimes transferred to large negative values -248.... or zeroes even though I defined that NAs should remain NAs. This must be some kind of a bug in terra's package version.
 But those NA values should be removed when the script removes the cells that are missing data in any of the predictors. But it is good to keep this in mind when predictor variables are being visualized.
-Outputs are in .csv files (fluxes multiplied by 1000 and stored as integers to save memory). \
+Prediction outputs are in .csv files (fluxes multiplied by 1000 and stored as integers to save memory). \
 Script done and preliminary model runs made in Kubernetes 12/2021, but the script should be run as a whole again on ADAPT and might need to be adjusted to this platform.
 
 #### Predict at 8 km resolution from 1982 to 2016 with the models trained with different model training data set subsets - [src/final_qrf_8km_predictions_LOOCV_datasubsets](../src/final_qrf_8km_predictions_LOOCV_datasubsets)
