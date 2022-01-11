@@ -390,6 +390,7 @@ for (c in 1:nrow(crops)) {
         
         Soil.temperature.level.1_era5_soilmoist_temp_snow <- rast(paste0("soiltemplevel1_", time[t], ".tif"))
         #plot(Soil.temperature.level.1_era5_soilmoist_temp_snow)
+        Soil.temperature.level.1_era5_soilmoist_temp_snow[Soil.temperature.level.1_era5_soilmoist_temp_snow< 1] <- NA # NAs seen as 0 or -248... values
         Soil.temperature.level.1_era5_soilmoist_temp_snow
         summary(d$Soil.temperature.level.1_era5_soilmoist_temp_snow)
         Soil.temperature.level.1_era5_soilmoist_temp_snow <- Soil.temperature.level.1_era5_soilmoist_temp_snow/100
