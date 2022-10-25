@@ -13,6 +13,7 @@ d <- read.csv("../results/final/modeldata_avg.csv", stringsAsFactors = F)
 
 
 ### In-situ data averages: annual and seasonal, add number of obs and sites
+# need to update this with the final modeling data values eventually
 
 
 insitu <- NA
