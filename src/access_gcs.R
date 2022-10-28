@@ -51,6 +51,15 @@ files_to_download3 <- files_to_download2[grepl("soilmoist", files_to_download2)]
 files_to_download3 <- files_to_download2[grepl("soiltemp", files_to_download2)]
 
 
+files_to_download <- grep("*masking_summary", contents$name, value = TRUE)
+files_to_download3 <- files_to_download[grepl("permaice", files_to_download)]
+files_to_download3 <- files_to_download[grepl("countr", files_to_download)]
+files_to_download3 <- files_to_download[grepl("Ecoregions2017_tundraboreal.", files_to_download)]
+files_to_download3 <- files_to_download[grepl("/countries", files_to_download)]
+
+
+
+
 map(files_to_download3, function(x) gcs_get_object(x, saveToDisk = x, overwrite = TRUE))
 
 

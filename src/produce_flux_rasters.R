@@ -6,7 +6,7 @@ library("terra")
 library(dplyr)
 
 setwd("/home/master/")
-terraOptions(memfrac=0.9, tempdir = "Temp/") 
+terraOptions(memfrac=0.9, tempdir = "temp/") 
 
 ### 8 km predictions ###
 
@@ -51,7 +51,7 @@ avg_rasters <- function(flux, pattern1) {
     
     selected_columns[1:2] <- TRUE # add coords
     df2 <- df[, selected_columns]
-    print(colnames(df2))
+    print(colnames(df2)[3:length(colnames(df2))])
     
     df3 <- df2  # %>% mutate(mean = rowMeans(.[, 3:ncol(df2)])) # this would do annual averages
     df4 <- df3[, c(1:2, ncol(df3))]
@@ -80,7 +80,7 @@ avg_rasters <- function(flux, pattern1) {
     
     selected_columns[1:2] <- TRUE # add coords
     df2 <- df[, selected_columns]
-    print(colnames(df2))
+    print(colnames(df2)[3:length(colnames(df2))])
     
     df3 <- df2  %>% mutate(sum = rowSums(.[, 3:ncol(df2)]))
     
@@ -90,10 +90,29 @@ avg_rasters <- function(flux, pattern1) {
     r <- rast(rasterdf[], type="xyz")
     # plot(r)
     crs(r) <- "+proj=laea +lat_0=90 +lon_0=0 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs "
-    writeRaster(r, paste0("/home/master/local_outputs/predictions_8km/raster/0.5/", flux, stri_paste(months, collapse=''), "_", pattern1, ".tif"), overwrite=TRUE, datatype="INT4S")
+    writeRaster(r, paste0("/home/master/local_outputs/predictions_8km/raster/0.5/", flux, stri_paste(months, collapse=''), "_", pattern1, "_sum.tif"), overwrite=TRUE, datatype="INT4S")
     
     
+    # y <- "1982"
+    selected_columns <- str_detect(columns, paste(months, collapse = "|")) 
     
+    selected_columns2 <- str_detect(columns, pattern1)
+    
+    selected_columns <- ifelse(selected_columns==TRUE & selected_columns2==TRUE, TRUE, FALSE)
+    
+    selected_columns[1:2] <- TRUE # add coords
+    df2 <- df[, selected_columns]
+    print(colnames(df2)[3:length(colnames(df2))])
+    
+    df3 <- df2  %>% mutate(sum = rowMeans(.[, 3:ncol(df2)]))
+    
+    df4 <- df3[, c(1, 2, ncol(df3))]
+    
+    rasterdf  <- as.matrix(df4[]) 
+    r <- rast(rasterdf[], type="xyz")
+    # plot(r)
+    crs(r) <- "+proj=laea +lat_0=90 +lon_0=0 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs "
+    writeRaster(r, paste0("/home/master/local_outputs/predictions_8km/raster/0.5/", flux, stri_paste(months, collapse=''), "_", pattern1, "_mean.tif"), overwrite=TRUE, datatype="INT4S") 
   
 
   
@@ -110,7 +129,7 @@ avg_rasters <- function(flux, pattern1) {
     
     selected_columns[1:2] <- TRUE # add coords
     df2 <- df[, selected_columns]
-    print(colnames(df2))
+    print(colnames(df2)[3:length(colnames(df2))])
     
     df3 <- df2  %>% mutate(sum = rowSums(.[, 3:ncol(df2)]))
     
@@ -120,11 +139,31 @@ avg_rasters <- function(flux, pattern1) {
     r <- rast(rasterdf[], type="xyz")
     # plot(r)
     crs(r) <- "+proj=laea +lat_0=90 +lon_0=0 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs "
-    writeRaster(r, paste0("/home/master/local_outputs/predictions_8km/raster/0.5/", flux, stri_paste(months, collapse=''), "_", pattern1, ".tif"), overwrite=TRUE, datatype="INT4S")
+    writeRaster(r, paste0("/home/master/local_outputs/predictions_8km/raster/0.5/", flux, stri_paste(months, collapse=''), "_", pattern1, "_sum.tif"), overwrite=TRUE, datatype="INT4S")
  
 
   
-
+    # y <- "1982"
+    selected_columns <- str_detect(columns, paste(months, collapse = "|")) 
+    
+    selected_columns2 <- str_detect(columns, pattern1)
+    
+    selected_columns <- ifelse(selected_columns==TRUE & selected_columns2==TRUE, TRUE, FALSE)
+    
+    selected_columns[1:2] <- TRUE # add coords
+    df2 <- df[, selected_columns]
+    print(colnames(df2)[3:length(colnames(df2))])
+    
+    df3 <- df2  %>% mutate(sum = rowMeans(.[, 3:ncol(df2)]))
+    
+    df4 <- df3[, c(1, 2, ncol(df3))]
+    
+    rasterdf  <- as.matrix(df4[]) 
+    r <- rast(rasterdf[], type="xyz")
+    # plot(r)
+    crs(r) <- "+proj=laea +lat_0=90 +lon_0=0 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs "
+    writeRaster(r, paste0("/home/master/local_outputs/predictions_8km/raster/0.5/", flux, stri_paste(months, collapse=''), "_", pattern1, "_mean.tif"), overwrite=TRUE, datatype="INT4S")
+    
   
   
   
@@ -142,7 +181,7 @@ avg_rasters <- function(flux, pattern1) {
     
     selected_columns[1:2] <- TRUE # add coords
     df2 <- df[, selected_columns]
-    print(colnames(df2))
+    print(colnames(df2)[3:length(colnames(df2))])
     
     df3 <- df2  %>% mutate(sum = rowSums(.[, 3:ncol(df2)]))
     
@@ -152,12 +191,33 @@ avg_rasters <- function(flux, pattern1) {
     r <- rast(rasterdf[], type="xyz")
     # plot(r)
     crs(r) <- "+proj=laea +lat_0=90 +lon_0=0 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs "
-    writeRaster(r, paste0("/home/master/local_outputs/predictions_8km/raster/0.5/", flux, stri_paste(months, collapse=''), "_", pattern1, ".tif"), overwrite=TRUE, datatype="INT4S")
+    writeRaster(r, paste0("/home/master/local_outputs/predictions_8km/raster/0.5/", flux, stri_paste(months, collapse=''), "_", pattern1, "_sum.tif"), overwrite=TRUE, datatype="INT4S")
     
-    
-    }
   
-
+    # y <- "2000"
+    selected_columns <- str_detect(columns, paste(months, collapse = "|")) 
+    
+    selected_columns2 <- str_detect(columns, pattern1)
+    
+    selected_columns <- ifelse(selected_columns==TRUE & selected_columns2==TRUE, TRUE, FALSE)
+    
+    selected_columns[1:2] <- TRUE # add coords
+    df2 <- df[, selected_columns]
+    print(colnames(df2)[3:length(colnames(df2))])
+    
+    df3 <- df2  %>% mutate(sum = rowMeans(.[, 3:ncol(df2)]))
+    
+    df4 <- df3[, c(1, 2, ncol(df3))]
+    
+    rasterdf  <- as.matrix(df4[]) 
+    r <- rast(rasterdf[], type="xyz")
+    # plot(r)
+    crs(r) <- "+proj=laea +lat_0=90 +lon_0=0 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs "
+    writeRaster(r, paste0("/home/master/local_outputs/predictions_8km/raster/0.5/", flux, stri_paste(months, collapse=''), "_", pattern1, "_mean.tif"), overwrite=TRUE, datatype="INT4S")
+    
+    
+    
+    
   
   print("most of 3-month seasons done")
   
@@ -178,7 +238,7 @@ avg_rasters <- function(flux, pattern1) {
     
     selected_columns[1:2] <- TRUE # add coords
     df2 <- df[, selected_columns]
-    print(colnames(df2))
+    print(colnames(df2)[3:length(colnames(df2))])
     
     df3 <- df2  %>% mutate(sum = rowSums(.[, 3:ncol(df2)]))
     
@@ -188,8 +248,29 @@ avg_rasters <- function(flux, pattern1) {
     r <- rast(rasterdf[], type="xyz")
     # plot(r)
     crs(r) <- "+proj=laea +lat_0=90 +lon_0=0 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs "
-    writeRaster(r, paste0("/home/master/local_outputs/predictions_8km/raster/0.5/", flux, stri_paste(months, collapse=''), "_", pattern1, ".tif"), overwrite=TRUE, datatype="INT4S")
+    writeRaster(r, paste0("/home/master/local_outputs/predictions_8km/raster/0.5/", flux, stri_paste(months, collapse=''), "_", pattern1, "_sum.tif"), overwrite=TRUE, datatype="INT4S")
 
+    
+    # y <- "1982"
+    selected_columns <- str_detect(columns, paste(months, collapse = "|")) 
+    
+    selected_columns2 <- str_detect(columns, pattern1)
+    
+    selected_columns <- ifelse(selected_columns==TRUE & selected_columns2==TRUE, TRUE, FALSE)
+    
+    selected_columns[1:2] <- TRUE # add coords
+    df2 <- df[, selected_columns]
+    print(colnames(df2)[3:length(colnames(df2))])
+    
+    df3 <- df2  %>% mutate(sum = rowMeans(.[, 3:ncol(df2)]))
+    
+    df4 <- df3[, c(1, 2, ncol(df3))]
+    
+    rasterdf  <- as.matrix(df4[]) 
+    r <- rast(rasterdf[], type="xyz")
+    # plot(r)
+    crs(r) <- "+proj=laea +lat_0=90 +lon_0=0 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs "
+    writeRaster(r, paste0("/home/master/local_outputs/predictions_8km/raster/0.5/", flux, stri_paste(months, collapse=''), "_", pattern1, "_mean.tif"), overwrite=TRUE, datatype="INT4S")
   
   print("GS done")
   
@@ -211,7 +292,7 @@ avg_rasters <- function(flux, pattern1) {
     
     selected_columns[1:2] <- TRUE # add coords
     df2 <- df[, selected_columns]
-    print(colnames(df2))
+    print(colnames(df2)[3:length(colnames(df2))])
     
     df3 <- df2  %>% mutate(sum = rowSums(.[, 3:ncol(df2)]))
     
@@ -221,7 +302,7 @@ avg_rasters <- function(flux, pattern1) {
     r <- rast(rasterdf[], type="xyz")
     # plot(r)
     crs(r) <- "+proj=laea +lat_0=90 +lon_0=0 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs "
-    writeRaster(r, paste0("/home/master/local_outputs/predictions_8km/raster/0.5/", flux, "_", pattern1, ".tif"), overwrite=TRUE, datatype="INT4S")
+    writeRaster(r, paste0("/home/master/local_outputs/predictions_8km/raster/0.5/", flux, "_", pattern1, "_sum.tif"), overwrite=TRUE, datatype="INT4S")
     
   
   
@@ -272,7 +353,7 @@ avg_rasters <- function(flux, pattern1) {
       
       selected_columns[1:2] <- TRUE # add coords
       df2 <- df[, selected_columns]
-      print(colnames(df2))
+      print(colnames(df2)[3:length(colnames(df2))])
       
       df3 <- df2  %>% mutate(sum = rowSums(.[, 3:ncol(df2)]))
       
@@ -282,12 +363,19 @@ avg_rasters <- function(flux, pattern1) {
       r <- rast(rasterdf[], type="xyz")
       # plot(r)
       crs(r) <- "+proj=laea +lat_0=90 +lon_0=0 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs "
-      writeRaster(r, paste0("/home/master/local_outputs/predictions_8km/raster/0.5/", flux, stri_paste(months, collapse=''), "_", pattern1, ".tif"), overwrite=TRUE, datatype="INT4S")
+      writeRaster(r, paste0("/home/master/local_outputs/predictions_8km/raster/0.5/", flux, stri_paste(months, collapse=''), "_", pattern1, "_sum.tif"), overwrite=TRUE, datatype="INT4S")
       
       
-      
-    }
 
+      df3 <- df2  %>% mutate(sum = rowMeans(.[, 3:ncol(df2)]))
+      
+      df4 <- df3[, c(1, 2, ncol(df3))]
+      
+      rasterdf  <- as.matrix(df4[]) 
+      r <- rast(rasterdf[], type="xyz")
+      # plot(r)
+      crs(r) <- "+proj=laea +lat_0=90 +lon_0=0 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs "
+      writeRaster(r, paste0("/home/master/local_outputs/predictions_8km/raster/0.5/", flux, stri_paste(months, collapse=''), "_", pattern1, "_mean.tif"), overwrite=TRUE, datatype="INT4S")
     
   }
   
@@ -339,7 +427,7 @@ avg_rasters <- function(flux, pattern1) {
       
       selected_columns[1:2] <- TRUE # add coords
       df2 <- df[, selected_columns]
-      print(colnames(df2))
+      print(colnames(df2)[3:length(colnames(df2))])
       
       df3 <- df2  %>% mutate(sum = rowSums(.[, 3:ncol(df2)]))
       
@@ -349,9 +437,18 @@ avg_rasters <- function(flux, pattern1) {
       r <- rast(rasterdf[], type="xyz")
       # plot(r)
       crs(r) <- "+proj=laea +lat_0=90 +lon_0=0 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs "
-      writeRaster(r, paste0("/home/master/local_outputs/predictions_8km/raster/0.5/", flux, stri_paste(months, collapse=''), "_", pattern1, ".tif"), overwrite=TRUE, datatype="INT4S")
+      writeRaster(r, paste0("/home/master/local_outputs/predictions_8km/raster/0.5/", flux, stri_paste(months, collapse=''), "_", pattern1, "_sum.tif"), overwrite=TRUE, datatype="INT4S")
       
       
+      df3 <- df2  %>% mutate(sum = rowMeans(.[, 3:ncol(df2)]))
+      
+      df4 <- df3[, c(1, 2, ncol(df3))]
+      
+      rasterdf  <- as.matrix(df4[]) 
+      r <- rast(rasterdf[], type="xyz")
+      # plot(r)
+      crs(r) <- "+proj=laea +lat_0=90 +lon_0=0 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs "
+      writeRaster(r, paste0("/home/master/local_outputs/predictions_8km/raster/0.5/", flux, stri_paste(months, collapse=''), "_", pattern1, "_mean.tif"), overwrite=TRUE, datatype="INT4S")
       
     }
     
@@ -369,7 +466,7 @@ avg_rasters <- function(flux, pattern1) {
   
 }
 
-years <- seq(1982, 2016, by=1)
+years <- seq(1990, 2016, by=1)
 
 for (y in years) {
   
@@ -380,6 +477,7 @@ for (y in years) {
 
 
 # average annual, gs, and ngs fluxes
+setwd("/home/master/local_outputs/predictions_8km/raster/0.5/")
 
 # virkkala 1990-2015
 files <- list.files("/home/master/local_outputs/predictions_8km/raster/0.5/")
@@ -396,3 +494,32 @@ files3 <- files[22:35]
 r <- rast(files3)
 r2 <- mean(r)
 writeRaster(r2, "/home/master/local_outputs/predictions_8km/raster/0.5/NEE_ngs_avg_20032016.tif", overwrite=TRUE, datatype="INT4S")
+
+# natali 2003-2016
+files <- list.files("/home/master/local_outputs/predictions_8km/raster/0.5/", pattern="01_02_03_04_10_11_12")
+files3 <- files[22:35]
+r <- rast(files3)
+r2 <- mean(r)
+writeRaster(r2, "/home/master/local_outputs/predictions_8km/raster/0.5/NEE_ngs_avg_20032016.tif", overwrite=TRUE, datatype="INT4S")
+
+
+# here 1990-2016
+files <- list.files("/home/master/local_outputs/predictions_8km/raster/0.5/")
+files3 <- files[nchar(files)==22]
+r <- rast(files3)
+r2 <- mean(r)
+writeRaster(r2, "/home/master/local_outputs/predictions_8km/raster/0.5/NEE_avg_19902016.tif", overwrite=TRUE, datatype="INT4S")
+
+files <- list.files("/home/master/local_outputs/predictions_8km/raster/0.5/", pattern="01_02_03_04_10_11_12")
+files3 <- files[str_detect(files, "sum")]
+r <- rast(files3)
+r2 <- mean(r)
+writeRaster(r2, "/home/master/local_outputs/predictions_8km/raster/0.5/NEE_avg_19902016_ngs.tif", overwrite=TRUE, datatype="INT4S")
+
+
+files <- list.files("/home/master/local_outputs/predictions_8km/raster/0.5/", pattern="05_06_07_08")
+files3 <- files[str_detect(files, "sum")]
+r <- rast(files3)
+r2 <- mean(r)
+writeRaster(r2, "/home/master/local_outputs/predictions_8km/raster/0.5/NEE_avg_19902016_gs.tif", overwrite=TRUE, datatype="INT4S")
+

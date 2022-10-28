@@ -1,19 +1,20 @@
 #install.packages("ggplot2", dependencies=TRUE)
 #install.packages("withr", dependencies=TRUE)
 #install.packages("randomForest", dependencies=TRUE)
-install.packages("RColorBrewer", dependencies=TRUE)
-library(ggplot2, lib.loc="R/x86_64-pc-linux-gnu-library/4.2")
+#install.packages("RColorBrewer", dependencies=TRUE)
+#install.packages("pkgconfig", dependencies=TRUE) # some error messages were there because of this
+library(ggplot2)
 library(stringr, lib.loc="R/x86_64-pc-linux-gnu-library/4.2")
 library(stringi, lib.loc="R/x86_64-pc-linux-gnu-library/4.2")
 library(terra, lib.loc="R/x86_64-pc-linux-gnu-library/4.2")
 library(dplyr, lib.loc="R/x86_64-pc-linux-gnu-library/4.2")
-library(shapr, lib.loc="R/x86_64-pc-linux-gnu-library/4.2")
-library(tidyr, lib.loc="R/x86_64-pc-linux-gnu-library/4.2")
-library(purrr, lib.loc="R/x86_64-pc-linux-gnu-library/4.2")
-library(caret, lib.loc="R/x86_64-pc-linux-gnu-library/4.2")
-library(fastshap, lib.loc="R/x86_64-pc-linux-gnu-library/4.2")
-library("quantregForest", lib.loc="R/x86_64-pc-linux-gnu-library/4.2")
-library("randomForest", lib.loc="R/x86_64-pc-linux-gnu-library/4.2")
+library(shapr)
+#library(tidyr, lib.loc="R/x86_64-pc-linux-gnu-library/4.2")
+library(purrr)
+library(caret)
+library(fastshap)
+library("quantregForest")
+library("randomForest")
 
 
 
@@ -87,8 +88,8 @@ r <- rast(rasterdf[], type="xyz")
 # all domain
 cropped_exent <-ext(r)
 
-# FINLAND
-# cropped_exent <-c(1e+06, 2e+06, -3e+06, 0)
+# FINLAND FOR TESTING
+#cropped_exent <-c(1e+06, 2e+06, -3e+06, 0)
 
 
 setwd("/home/master/cloud/predictors_8km")
@@ -645,20 +646,28 @@ for (t in 1:length(time)) {
   #   nsim = 1,
   #   pred_wrapper = predict.train, newdata=subset(d2, select = -NEE_gC_m2)) # this works
   
+  
+  print("starting the shapely")
   imp <- fastshap::explain(
     mod,
     X = subset(d2, select = -NEE_gC_m2),
     nsim = 1,
     pred_wrapper = predict.train, newdata=pred_rast_final)
   # but adding this creates error, newdata=pred_rast_final) # ,newdata = pred_rast
+  print("shapely done")
   
   
+  # tibble to data frame, this was creating issues
+  imp_save <-  as.data.frame(imp)
+  imp <-  as.data.frame(imp)
+  print("shapely to df")
   
   
   
   # remove some predictors
   # remove the predictions to the model training data which were just done to fix the random forest error
   imp2 <- imp[(nrow(d2)+1):length(imp$srad_terraclimate_sites),]
+  print("shapely edits")
   
   
   cols = names(imp2)
@@ -674,7 +683,7 @@ for (t in 1:length(time)) {
   
   # reclassify to temperature vs. ndvi vs. other
   data3$source_simple <- ifelse(data3$source=="ndvi_trend_19812010" | data3$source=="ndvi3g_lowest_gapfilled_mean_GIMMS3g_NDVI_sites_low_quality_gapfilled" | data3$source=="aboveground_biomass_carbon_2010_Above_belowground_biomass" | data3$source=="Percent_NonTree_Vegetation_AVHRR_VCF5KYR" | data3$source=="Percent_TreeCover_AVHRR_VCF5KYR" | data3$source=="Percent_NonVegetated_AVHRR_VCF5KYR" | data3$source=="ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged" | data3$source=="forest_age_class_forest_age_sites", 'vegetation', "other")
-  
+  print("shapely new summary column done")
   
   
   
@@ -696,6 +705,7 @@ for (t in 1:length(time)) {
   
   
   impr <- rast(imp2_matrix, type="xyz")
+  print("shapely raster done")
   
   impr <- impr*100
   

@@ -12,192 +12,199 @@ library(stringi, lib.loc="R/x86_64-pc-linux-gnu-library/4.2")
 #install.packages("stringr", dependencies=TRUE)
 library(stringr, lib.loc="R/x86_64-pc-linux-gnu-library/4.2")
 
-### calculate budgets for each year
-# separately for each month, climatological season, and full year
-# note that for the climatological season (DJF, MAm, "_trend", JJA, SON) and full year budgets, we'll need to aggregate the monthly predictions to cumulative fluxes for each pixel first (i.e. sum of pixel values from the same year)
-# winter season always includes the December value from the past year and Jan & Feb from the current year
-# budget will be calculated by summing all the pixels in the output together
-
-### calculate average and standard deviations of fluxes
-# calculated for the same temporal periods as the budgets, but this time the final step just calculates an average flux and its st deve, not the sum of the fluxes
-
-
-### calculate pixel-wise flux trends using zyp package 
-# calculated for the same temporal periods as above (so separate trends for each month, season, and annual flux)
 
 
 ### Focus on 1990-2020 for now
 
-# function to go through months, years, seasons
-setwd("/home/master/local_outputs/predictions_8km/raster/0.5")
-terraOptions(memfrac=0.9, tempdir = "/home/master/temp/") 
-trends <- function(flux) {
-  
-  months <- c("_01", "_02", "_03", "_04", "_05", "_06",
-              "_07", "_08", "_09", "_10", "_11", "_12")
-  
-  files <- list.files("/home/master/local_outputs/predictions_8km/raster/0.5", pattern=flux)
-  files <- files[!str_detect(files, "198")] 
-  files2 <- files[nchar(files)<25 & nchar(files)>20]
 
-  
-  for (m in months) {
-    
-    files3 <- files2[str_detect(files2, m)] 
-    
-    r <- rast(files3)
-    df <- as.data.frame(r, xy=TRUE)
-    
-    trend <- zyp.trend.dataframe(df, metadata.cols=2, method="yuepilon",
-                                 conf.intervals=TRUE, preserve.range.for.sig.test=TRUE)
-    
-    trendr <- rast(trend, type="xyz")
-    
-    writeRaster(trendr, paste0("/home/master/local_outputs/trends_drivers_8km/", flux,  m, "_trend", ".tif"), overwrite=TRUE, datatype="INT4S")
-    
-    
-    print(paste(m, "done"))
-    
-    
-  }
-  
-  file.remove(list.files("/home/master/temp/", full.names=TRUE))
-  
-  
-  # seasons: spring #
-  m <- c("_03_04_05")
-  
-  
-  files3 <- files[str_detect(files, m)] 
-  
-  r <- rast(files3)
-  df <- as.data.frame(r, xy=TRUE)
-  
-  trend <- zyp.trend.dataframe(df, metadata.cols=2, method="yuepilon",
-                               conf.intervals=TRUE, preserve.range.for.sig.test=TRUE)
-  
-  trendr <- rast(trend, type="xyz")
-  
-  writeRaster(trendr, paste0("/home/master/local_outputs/trends_drivers_8km/", flux,  m, "_trend", ".tif"), overwrite=TRUE, datatype="INT4S")
-  
-  
-  
-  # seasons: summer #
-  m <- c("_06_07_08")
-  
-  
-  files3 <- files[str_detect(files, m)] 
-  
-  r <- rast(files3)
-  df <- as.data.frame(r, xy=TRUE)
-  
-  trend <- zyp.trend.dataframe(df, metadata.cols=2, method="yuepilon",
-                               conf.intervals=TRUE, preserve.range.for.sig.test=TRUE)
-  
-  trendr <- rast(trend, type="xyz")
-  
-  writeRaster(trendr, paste0("/home/master/local_outputs/trends_drivers_8km/", flux,  m, "_trend", ".tif"), overwrite=TRUE, datatype="INT4S")
-  
-  
-  # seasons: autumn #
-  m <- c("_09_10_11")
-  
-  
-  files3 <- files[str_detect(files, m)] 
-  
-  r <- rast(files3)
-  df <- as.data.frame(r, xy=TRUE)
-  
-  trend <- zyp.trend.dataframe(df, metadata.cols=2, method="yuepilon",
-                               conf.intervals=TRUE, preserve.range.for.sig.test=TRUE)
-  
-  trendr <- rast(trend, type="xyz")
-  
-  writeRaster(trendr, paste0("/home/master/local_outputs/trends_drivers_8km/", flux,  m, "_trend", ".tif"), overwrite=TRUE, datatype="INT4S")
- 
-  
-  # seasons: winter #
-  m <- c("_01_02_12")
-  
-  
-  files3 <- files[str_detect(files, m)] 
-  
-  r <- rast(files3)
-  df <- as.data.frame(r, xy=TRUE)
-  
-  trend <- zyp.trend.dataframe(df, metadata.cols=2, method="yuepilon",
-                               conf.intervals=TRUE, preserve.range.for.sig.test=TRUE)
-  
-  trendr <- rast(trend, type="xyz")
-  
-  writeRaster(trendr, paste0("/home/master/local_outputs/trends_drivers_8km/", flux,  m, "_trend", ".tif"), overwrite=TRUE, datatype="INT4S")
-  
-  
-  
-  # seasons: ngs #
-  m <- c("_01_02_03_04_10_11_12")
-  
-  
-  files3 <- files[str_detect(files, m)] 
-  
-  r <- rast(files3)
-  df <- as.data.frame(r, xy=TRUE)
-  
-  trend <- zyp.trend.dataframe(df, metadata.cols=2, method="yuepilon",
-                               conf.intervals=TRUE, preserve.range.for.sig.test=TRUE)
-  
-  trendr <- rast(trend, type="xyz")
-  
-  writeRaster(trendr, paste0("/home/master/local_outputs/trends_drivers_8km/", flux,  m, "_trend", ".tif"), overwrite=TRUE, datatype="INT4S")
-  
-  file.remove(list.files("/home/master/temp/", full.names=TRUE))
-  
-  
-  # seasons: gs #
-  m <- c("_05_06_07_08_09")
-  
-  
-  files3 <- files[str_detect(files, m)] 
-  
-  r <- rast(files3)
-  df <- as.data.frame(r, xy=TRUE)
-  
-  trend <- zyp.trend.dataframe(df, metadata.cols=2, method="yuepilon",
-                               conf.intervals=TRUE, preserve.range.for.sig.test=TRUE)
-  
-  trendr <- rast(trend, type="xyz")
-  
-  writeRaster(trendr, paste0("/home/master/local_outputs/trends_drivers_8km/", flux,  m, "_trend", ".tif"), overwrite=TRUE, datatype="INT4S")
-  
-  
-  # annual #
-
-
-  files3 <- files[nchar(files)==18] 
-  
-  r <- rast(files3)
-  df <- as.data.frame(r, xy=TRUE)
-  
-  trend <- zyp.trend.dataframe(df, metadata.cols=2, method="yuepilon",
-                               conf.intervals=TRUE, preserve.range.for.sig.test=TRUE)
-  
-  trendr <- rast(trend, type="xyz")
-  
-  writeRaster(trendr, paste0("/home/master/local_outputs/trends_drivers_8km/", flux,  "_annual","_trend", ".tif"), overwrite=TRUE, datatype="INT4S")
-   
-
-  rm(trendr);rm(trend);rm(r)
-  gc()
-  
-  file.remove(list.files("/home/master/temp/", full.names=TRUE))
-  
-  
-  
-}
-
-
-trends("NEE_gC_m2")
-#trends("Reco_gC_m2")
+## UNCOMMENTED BECAUSE DONE! BUT NOTE THESE WERE DONE FOR SUMS!!!
+# ### Flux trends
+# 
+# # function to go through months, years, seasons
+# setwd("/home/master/local_outputs/predictions_8km/raster/0.5")
+# terraOptions(memfrac=0.9, tempdir = "/home/master/temp/") 
+# trends <- function(flux) {
+#   
+#   months <- c("_01", "_02", "_03", "_04", "_05", "_06",
+#               "_07", "_08", "_09", "_10", "_11", "_12")
+#   
+#   files <- list.files("/home/master/local_outputs/predictions_8km/raster/0.5", pattern=flux)
+#   files <- files[!str_detect(files, "198")] 
+#   files2 <- files[nchar(files)<25 & nchar(files)>20]
+# 
+#   
+#   for (m in months) {
+#     
+#     files3 <- files2[str_detect(files2, m)] 
+#     print(files3)
+#     
+#     r <- rast(files3)
+#     df <- as.data.frame(r, xy=TRUE)
+#     
+#     trend <- zyp.trend.dataframe(df, metadata.cols=2, method="yuepilon",
+#                                  conf.intervals=TRUE, preserve.range.for.sig.test=TRUE)
+#     
+#     trendr <- rast(trend, type="xyz")
+#     
+#     writeRaster(trendr, paste0("/home/master/local_outputs/trends_drivers_8km/", flux,  m, "_trend", ".tif"), overwrite=TRUE, datatype="INT4S")
+#     
+#     
+#     print(paste(m, "done"))
+#     
+#     
+#   }
+#   
+#   file.remove(list.files("/home/master/temp/", full.names=TRUE))
+#   
+#   
+#   # seasons: spring #
+#   m <- c("_03_04_05")
+#   
+#   
+#   files3 <- files[str_detect(files, m)] 
+#   print(files3)
+#   
+#   
+#   r <- rast(files3)
+#   df <- as.data.frame(r, xy=TRUE)
+#   
+#   trend <- zyp.trend.dataframe(df, metadata.cols=2, method="yuepilon",
+#                                conf.intervals=TRUE, preserve.range.for.sig.test=TRUE)
+#   
+#   trendr <- rast(trend, type="xyz")
+#   
+#   writeRaster(trendr, paste0("/home/master/local_outputs/trends_drivers_8km/", flux,  m, "_trend", ".tif"), overwrite=TRUE, datatype="INT4S")
+#   
+#   
+#   
+#   # seasons: summer #
+#   m <- c("_06_07_08")
+#   
+#   
+#   files3 <- files[str_detect(files, m)] 
+#   print(files3)
+#   
+#   
+#   r <- rast(files3)
+#   df <- as.data.frame(r, xy=TRUE)
+#   
+#   trend <- zyp.trend.dataframe(df, metadata.cols=2, method="yuepilon",
+#                                conf.intervals=TRUE, preserve.range.for.sig.test=TRUE)
+#   
+#   trendr <- rast(trend, type="xyz")
+#   
+#   writeRaster(trendr, paste0("/home/master/local_outputs/trends_drivers_8km/", flux,  m, "_trend", ".tif"), overwrite=TRUE, datatype="INT4S")
+#   
+#   
+#   # seasons: autumn #
+#   m <- c("_09_10_11")
+#   
+#   
+#   files3 <- files[str_detect(files, m)] 
+#   print(files3)
+#   
+#   
+#   r <- rast(files3)
+#   df <- as.data.frame(r, xy=TRUE)
+#   
+#   trend <- zyp.trend.dataframe(df, metadata.cols=2, method="yuepilon",
+#                                conf.intervals=TRUE, preserve.range.for.sig.test=TRUE)
+#   
+#   trendr <- rast(trend, type="xyz")
+#   
+#   writeRaster(trendr, paste0("/home/master/local_outputs/trends_drivers_8km/", flux,  m, "_trend", ".tif"), overwrite=TRUE, datatype="INT4S")
+#  
+#   
+#   # seasons: winter #
+#   m <- c("_01_02_12")
+#   
+#   
+#   files3 <- files[str_detect(files, m)] 
+#   print(files3)
+#   
+#   
+#   r <- rast(files3)
+#   df <- as.data.frame(r, xy=TRUE)
+#   
+#   trend <- zyp.trend.dataframe(df, metadata.cols=2, method="yuepilon",
+#                                conf.intervals=TRUE, preserve.range.for.sig.test=TRUE)
+#   
+#   trendr <- rast(trend, type="xyz")
+#   
+#   writeRaster(trendr, paste0("/home/master/local_outputs/trends_drivers_8km/", flux,  m, "_trend", ".tif"), overwrite=TRUE, datatype="INT4S")
+#   
+#   
+#   
+#   # seasons: ngs #
+#   m <- c("_01_02_03_04_10_11_12")
+#   
+#   
+#   files3 <- files[str_detect(files, m)] 
+#   print(files3)
+#   
+#   
+#   r <- rast(files3)
+#   df <- as.data.frame(r, xy=TRUE)
+#   
+#   trend <- zyp.trend.dataframe(df, metadata.cols=2, method="yuepilon",
+#                                conf.intervals=TRUE, preserve.range.for.sig.test=TRUE)
+#   
+#   trendr <- rast(trend, type="xyz")
+#   
+#   writeRaster(trendr, paste0("/home/master/local_outputs/trends_drivers_8km/", flux,  m, "_trend", ".tif"), overwrite=TRUE, datatype="INT4S")
+#   
+#   file.remove(list.files("/home/master/temp/", full.names=TRUE))
+#   
+#   
+#   # seasons: gs #
+#   m <- c("_05_06_07_08_09")
+#   
+#   
+#   files3 <- files[str_detect(files, m)] 
+#   print(files3)
+#   
+#   
+#   r <- rast(files3)
+#   df <- as.data.frame(r, xy=TRUE)
+#   
+#   trend <- zyp.trend.dataframe(df, metadata.cols=2, method="yuepilon",
+#                                conf.intervals=TRUE, preserve.range.for.sig.test=TRUE)
+#   
+#   trendr <- rast(trend, type="xyz")
+#   
+#   writeRaster(trendr, paste0("/home/master/local_outputs/trends_drivers_8km/", flux,  m, "_trend", ".tif"), overwrite=TRUE, datatype="INT4S")
+#   
+#   
+#   # annual #
+# 
+# 
+#   files3 <- files[nchar(files)==18] 
+#   print(files3)
+#   
+#   
+#   r <- rast(files3)
+#   df <- as.data.frame(r, xy=TRUE)
+#   
+#   trend <- zyp.trend.dataframe(df, metadata.cols=2, method="yuepilon",
+#                                conf.intervals=TRUE, preserve.range.for.sig.test=TRUE)
+#   
+#   trendr <- rast(trend, type="xyz")
+#   
+#   writeRaster(trendr, paste0("/home/master/local_outputs/trends_drivers_8km/", flux,  "_annual","_trend", ".tif"), overwrite=TRUE, datatype="INT4S")
+#    
+# 
+#   rm(trendr);rm(trend);rm(r)
+#   gc()
+#   
+#   file.remove(list.files("/home/master/temp/", full.names=TRUE))
+#   
+#   
+#   
+# }
+# 
+# 
+# trends("NEE_gC_m2")
+# #trends("Reco_gC_m2")
 
 
 
@@ -225,6 +232,12 @@ trends_env <- function(env) {
   files <- files[!str_detect(files, "2021")] 
   files <- files[!str_detect(files, "2022")] 
   files <- files[!str_detect(files, "trend")] 
+  files <- files[!str_detect(files, "average")] 
+  files <- files[!str_detect(files, "2017")] 
+  files <- files[!str_detect(files, "2018")] 
+  files <- files[!str_detect(files, "2019")] 
+  files <- files[!str_detect(files, "2020")] 
+  files <- files[endsWith(files, '*.tif$')]
   
   # # TEMPORARY
   # files <- files[str_detect(files, "199")] 
@@ -235,8 +248,16 @@ trends_env <- function(env) {
   
   for (m in months) {
     
-    m2 <- sub("0+", "", m)
+    # add point after m - this needs to be done because _1. somehow is not seen by the program
+    m_orig <- m
+    m <- paste(m, ".tif", sep="")
+    # if _01 -> _1
+    m2 <- sub("_0+", "_", m)
+    
+   
     files3 <- files[str_detect(files, m) | str_detect(files, m2)] 
+    print(files3)
+    
 
     r <- rast(files3)
     df <- as.data.frame(r, xy=TRUE)
@@ -246,7 +267,7 @@ trends_env <- function(env) {
     
     trendr <- rast(trend, type="xyz")
     
-    writeRaster(trendr, paste0("/home/master/local_outputs/trends_drivers_8km/", env,  m, "_trend", ".tif"), overwrite=TRUE, datatype="INT4S")
+    writeRaster(trendr, paste0("/home/master/local_outputs/trends_drivers_8km/", env,  m_orig, "_trend", ".tif"), overwrite=TRUE, datatype="INT4S")
     
     
     print(paste(m, "done"))
@@ -259,6 +280,8 @@ trends_env <- function(env) {
   m <- c("_03_04_05")
   
   files3 <- files[str_detect(files, "_03") | str_detect(files, "_04") | str_detect(files, "_05") | str_detect(files, "_3") | str_detect(files, "_4") | str_detect(files, "_5")] 
+  print(files3)
+  
   
   rs <- rast()
   
@@ -282,11 +305,12 @@ trends_env <- function(env) {
   writeRaster(trendr, paste0("/home/master/local_outputs/trends_drivers_8km/", env,  m, "_trend", ".tif"), overwrite=TRUE, datatype="INT4S")
   
   
-  
   # seasons: summer #
   m <- c("_06_07_08")
   
   files3 <- files[str_detect(files, "_06") | str_detect(files, "_07") | str_detect(files, "_08") | str_detect(files, "_6") | str_detect(files, "_7") | str_detect(files, "_8")] 
+  print(files3)
+  
   
   rs <- rast()
   
@@ -316,6 +340,8 @@ trends_env <- function(env) {
   m <- c("_09_10_11")
   
   files3 <- files[str_detect(files, "_09") | str_detect(files, "_10") | str_detect(files, "_11") | str_detect(files, "_9") | str_detect(files, "_10") | str_detect(files, "_11")] 
+  print(files3)
+  
   
   rs <- rast()
   
@@ -342,7 +368,31 @@ trends_env <- function(env) {
   # seasons: winter #
   m <- c("_01_02_12")
   
-  files3 <- files[str_detect(files, "_01") | str_detect(files, "_02") | str_detect(files, "_12") | str_detect(files, "_1") | str_detect(files, "_2") | str_detect(files, "_12")] 
+  # need to take a different file subset so that 1989 for 1990 can be included
+  files2 <- list.files("/home/master/cloud/predictors_8km", pattern=env)
+  files2 <- files2[!str_detect(files2, "1988")] 
+  files2 <- files2[!str_detect(files2, "1987")] 
+  files2 <- files2[!str_detect(files2, "1986")] 
+  files2 <- files2[!str_detect(files2, "1985")] 
+  files2 <- files2[!str_detect(files2, "1984")] 
+  files2 <- files2[!str_detect(files2, "1983")] 
+  files2 <- files2[!str_detect(files2, "1982")] 
+  files2 <- files2[!str_detect(files2, "1981")] 
+  files2 <- files2[!str_detect(files2, "1980")] 
+  files2 <- files2[!str_detect(files2, "2021")] 
+  files2 <- files2[!str_detect(files2, "2022")] 
+  files2 <- files2[!str_detect(files2, "trend")] 
+  files2 <- files2[!str_detect(files2, "average")] 
+  files2 <- files2[!str_detect(files2, "2017")] 
+  files2 <- files2[!str_detect(files2, "2018")] 
+  files2 <- files2[!str_detect(files2, "2019")] 
+  files2 <- files2[!str_detect(files2, "2020")] 
+  files2 <- files2[endsWith(files2, '*.tif$')]
+  
+  
+  files3 <- files2[str_detect(files2, "_01") | str_detect(files2, "_02") | str_detect(files2, "_12") | str_detect(files2, "_1") | str_detect(files2, "_2") | str_detect(files2, "_12")] 
+  print(files3)
+  
   
   rs <- rast()
   
@@ -373,7 +423,8 @@ trends_env <- function(env) {
   # seasons: ngs #
   m <- c("_01_02_03_04_10_11_12")
   
-  files3 <- files[str_detect(files, "_01") | str_detect(files, "_02") |str_detect(files, "_03") |str_detect(files, "_04") |str_detect(files, "_10") |str_detect(files, "_11") | str_detect(files, "_12") | str_detect(files, "_1") | str_detect(files, "_2") |str_detect(files, "_3") |str_detect(files, "_4")] 
+  files3 <- files2[str_detect(files2, "_01.tif") | str_detect(files2, "_02") |str_detect(files2, "_03") |str_detect(files2, "_04") |str_detect(files2, "_10") |str_detect(files2, "_11") | str_detect(files2, "_12") | str_detect(files2, "_1.tif") | str_detect(files2, "_2") |str_detect(files2, "_3") |str_detect(files2, "_4")] 
+  print(files3)
   
   rs <- rast()
   
@@ -408,6 +459,7 @@ trends_env <- function(env) {
   
   
   files3 <- files[str_detect(files, "_05") | str_detect(files, "_06") | str_detect(files, "_07") | str_detect(files, "_08") | str_detect(files, "_09") | str_detect(files, "_5") | str_detect(files, "_6") | str_detect(files, "_7") | str_detect(files, "_8") | str_detect(files, "_9")] 
+  print(files3)
   
   rs <- rast()
   
@@ -435,6 +487,7 @@ trends_env <- function(env) {
   
   
   files3 <- files
+  print(files3)
   
   for (y in years) {
     
@@ -465,10 +518,10 @@ trends_env <- function(env) {
 }
 
 
-trends_env("tmean")
-trends_env("ndvi")
-trends_env("srad")
-trends_env("soilmoist")
+# trends_env("tmean")
+# trends_env("ndvi")
+# trends_env("srad")
+# trends_env("soilmoist")
 trends_env("soiltemp")
 trends_env("vpd")
 
