@@ -690,30 +690,54 @@ for (c in 1:nrow(crops)) {
           print(m)
           
           # Load model files
-          mod <- readRDS(paste0("/mnt/data1/boreal/avirkkala/repos/abcflux_modeling/results/", paste(i,  km, m, "train_loocv", sep="_"), ".rds"))
+          mod <- readRDS(paste0("/mnt/data1/boreal/avirkkala/repos/abcflux_modeling/results/", paste(i,  km, m, "train_loocv_full_model_without_larvaloutbreak", sep="_"), ".rds"))
+          mod2 = mod$finalModel #pull out the quantile regression object
           
           print("prediction started")
           
-          library("randomForest") 
-          pred <- predict(mod, newdata=pred_rast_final)
-          pred <- unname(pred)
-          pred <- pred*1000 #multiply by 1000 so that can save in integers
-          pred <- round(pred, digits = 0)
+          #quantiles to get for predictions
+          quantiles = c(0.1, 0.5, 0.9)
           
+          pred <- predict(mod2, newdata=pred_rast_final, what = quantiles) #vector of confidence intervals to predict
           
-          # remove the predictions to the model training data which were just done to fix the random forest error
-          pred <- pred[(nrow(modeldata1)+1):length(pred)]
-          
-          
-          print("prediction to dataframe done")
-          
-          # add cell coordinates and write out
-          pred_matrix  <- data.matrix(data.frame(cbind(pred_rast[,1:2], pred)))
-          write.csv(pred_matrix, paste0("/mnt/data1/boreal/avirkkala/abcflux_modeling/predictions_8km/", paste(i,  km, m, time[t],c, "train_loocv", sep="_"), ".csv"), row.names=FALSE) 
-          
-          print(paste("1 km prediction raster done and written out for ", i, km, m, time[t], c))
-          
-          rm(pred_matrix); rm(pred); rm(mod); gc()
+          #loop through the quantiles
+          for(q in 1:length(quantiles)){
+            
+            this_q = quantiles[[q]]
+            
+            
+            #get outpath
+            out_path = file.path("/att/nobackup/jdwatts/Arctic_CO2_Upscaling/abcflux_modeling/predictions_8km_stefano", this_q)
+            dir.create(out_path, recursive = T)
+            
+            
+            #get the dimension of interest
+            sub_pred = pred[, q]
+            
+            sub_pred <- unname(sub_pred)
+            sub_pred <- sub_pred*1000 #multiply by 1000 so that can save in integers
+            sub_pred <- round(sub_pred, digits = 0)
+            
+            
+            # remove the predictions to the model training data which were just done to fix the random forest error
+            sub_pred <- sub_pred[(nrow(modeldata1)+1):length(sub_pred)]
+            
+            
+            print("prediction to dataframe done")
+            
+            # add cell coordinates and write out
+            pred_matrix  <- data.matrix(data.frame(cbind(pred_rast[,1:2], sub_pred)))
+            write.csv(pred_matrix, file.path(out_path, paste(i,  km, m, time[t],c, "train_loocv", sep="_")), row.names=FALSE) 
+            
+            print(paste("1 km prediction raster done and written out for ", i, km, m, time[t], c))
+            
+            rm(pred_matrix); rm(mod); gc()
+            
+            
+            
+            
+            
+          }
           
           
         } # model loop

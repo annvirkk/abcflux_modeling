@@ -38,6 +38,18 @@ files_to_download2 <- files_to_download2[grepl("predictors_8km", files_to_downlo
 files_to_download3 <- files_to_download2[!(grepl("predictors_1km", files_to_download2) | grepl("old", files_to_download2))]
 map(files_to_download3, function(x) gcs_get_object(x, saveToDisk = x, overwrite = TRUE))
 
+files_to_download <- grep("*.csv", contents$name, value = TRUE)
+files_to_download2 <- files_to_download[grepl("predictions_8km/0.1", files_to_download)]
+files_to_download3 <- files_to_download2[(grepl("NEE", files_to_download2))]
+files_to_download3 <- files_to_download3[97:420]
+map(files_to_download3, function(x) gcs_get_object(x, saveToDisk = x, overwrite = TRUE))
+
+# files_to_download2 <- files_to_download[grepl("predictions_8km/0.9", files_to_download)] # files not there?
+# files_to_download3 <- files_to_download2[(grepl("NEE", files_to_download2))]
+# files_to_download3 <- files_to_download3[97:420]
+# map(files_to_download3, function(x) gcs_get_object(x, saveToDisk = x, overwrite = TRUE))
+
+
 
 #need to take subsets to save memory
 files_to_download2 <- files_to_download[grepl("predictors_8km", files_to_download)]
