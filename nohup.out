@@ -1,1 +1,14 @@
 Fatal error: cannot open file 'abcflux_modeling/src/shapely_values.R': No such file or directory
+Fatal error: cannot open file 'abcflux_modeling/src/final_qrf_8km_predictions_LOOCV.R': No such file or directory
+Fatal error: cannot open file '/src/final_qrf_8km_predictions_LOOCV.R': No such file or directory
+Loading required package: ggplot2
+Error: package or namespace load failed for ‘ggplot2’:
+ package ‘ggplot2’ was installed before R 4.0.0: please re-install it
+Error: package ‘ggplot2’ could not be loaded
+Execution halted
+Loading required package: ggplot2
+Error: package or namespace load failed for ‘ggplot2’:
+ package ‘ggplot2’ was installed before R 4.0.0: please re-install it
+Error: package ‘ggplot2’ could not be loaded
+Execution halted
+Fatal error: cannot open file 'abcflux_modeling/src/calculate_predicted_flux_trends.R': No such file or directory

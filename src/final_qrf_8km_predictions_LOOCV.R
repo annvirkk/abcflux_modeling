@@ -2,23 +2,54 @@
 
 
 # Packages
-library("caret")
-library("dplyr")
-library("purrr")
-library("raster")
-library("terra", lib.loc="/mnt/data1/boreal/avirkkala/packages")
+
+# Use these for running through terminal
+#install.packages("ggplot2")
+library("sp", lib.loc="R/x86_64-pc-linux-gnu-library/4.2")
+library("ggplot2", lib.loc="R/x86_64-pc-linux-gnu-library/4.2")
+library("caret", lib.loc="R/x86_64-pc-linux-gnu-library/4.2")
+library("dplyr", lib.loc="R/x86_64-pc-linux-gnu-library/4.2")
+library("purrr", lib.loc="R/x86_64-pc-linux-gnu-library/4.2")
+library("raster", lib.loc="R/x86_64-pc-linux-gnu-library/4.2")
+library("terra", lib.loc="R/x86_64-pc-linux-gnu-library/4.2")
 #install.packages('terra', repos='https://rspatial.r-universe.dev', lib="/mnt/data1/boreal/avirkkala/packages")
-library(stringr)
+library(stringr, lib.loc="R/x86_64-pc-linux-gnu-library/4.2")
+library(googleCloudStorageR, lib.loc="R/x86_64-pc-linux-gnu-library/4.2")
+library(purrr, lib.loc="R/x86_64-pc-linux-gnu-library/4.2")
+library("quantregForest", lib.loc="R/x86_64-pc-linux-gnu-library/4.2")
+
+# 
+# # Use these for running in Rstudio
+# library("sp")
+# library("ggplot2")
+# library("caret")
+# library("dplyr")
+# library("purrr")
+# library("raster")
+# library("terra")
+# #install.packages('terra', repos='https://rspatial.r-universe.dev', lib="/mnt/data1/boreal/avirkkala/packages")
+# library(stringr)
+# library(googleCloudStorageR)
+# library(purrr)
+# library("quantregForest")
 
 
 
 # Terra settings
-terraOptions(memfrac=0.9, tempdir = "/mnt/data1/boreal/avirkkala/Temp") 
+terraOptions(memfrac=0.9, tempdir = "/home/master/temp/") 
 options(digits=20) # this is important, otherwise we will lose some digits with the cropped extents
 
+
+# Google cloud settings
+my_project_id <- "top-operand-328213"
+gcs_list_buckets(my_project_id)
+gcs_global_bucket("abcflux_modeling_files")
+contents <- gcs_list_objects()
+gcs_upload_set_limit(50000000L) # increasing data size limit for transferring data to google cloud
+
+
 ### Load the model training data just in case
-setwd("/mnt/data1/boreal/avirkkala/repos/flux_upscaling_data/src/")
-d <- read.csv("../results/final/modeldata_avg.csv") 
+d <- read.csv("/home/master/cloud/flux_upscaling_data/results/final/modeldata_avg.csv") 
 
 
 # Reclassify veg type and tkwp
@@ -77,7 +108,7 @@ kms <- c("20km")
 
 
 ### Time periods for the monthly predictions
-time <- seq(as.Date("1982/01/01"), as.Date("2016/12/31"), "months")
+time <- seq(as.Date("1990/01/01"), as.Date("2016/12/31"), "months") 
 time <- substr(time, 1, 7)
 time <- sub("-", "_", sub("_", "", time, fixed=TRUE), fixed=TRUE)
 time_alt <- gsub("_0", "_", time)
@@ -89,7 +120,7 @@ time_alt <- gsub("_0", "_", time)
 
 
 ### 8 km predictions will not need to be cropped to several domains as the 1 km predictions so we'll just crop the rasters to their original extent
-extent <- ext(rast("/mnt/data1/boreal/avirkkala/abcflux_modeling/masking_summary_rasters/ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_aggregate_northpolelambert8km_tundraboreal_attfix.tif")) %>% as.vector()
+extent <- ext(rast("/home/master/cloud/masking_summary_rasters/ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_aggregate_northpolelambert8km_tundraboreal_attfix.tif")) %>% as.vector()
 crops <- NA
 crops <- rbind(crops, extent) %>% data.frame()
 crops <- crops[2, ]
@@ -118,9 +149,9 @@ for (c in 1:nrow(crops)) {
       
       
       ### Load static vars (only once)
-      setwd("/mnt/data1/boreal/avirkkala/abcflux_modeling/predictors_8km") 
+      setwd("/home/master/cloud/predictors_8km") 
       
-      ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged <- rast("/mnt/data1/boreal/avirkkala/abcflux_modeling/masking_summary_rasters/ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_aggregate_northpolelambert8km_tundraboreal_attfix.tif")
+      ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged <- rast("/home/master/cloud/masking_summary_rasters/ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_aggregate_northpolelambert8km_tundraboreal_attfix.tif")
       ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged <- terra::crop(ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged, terra::ext(cropped_exent))
       #ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged <- as.data.frame(ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged, xy=TRUE)
       # 1 barren tundra, 21 graminoid tundra, 30 boreal mosaic vegetation, 31 prostrate shrub tundra, 33 low-shrub tundra, 41 tundra wetland,
@@ -347,7 +378,9 @@ for (c in 1:nrow(crops)) {
     for (t in 1:length(time)) {
       
       # t <- 1  
-      srad_terraclimate_sites <- rast(paste0("srad_", time_alt[t], ".tif"))
+      setwd("/home/master/cloud/") 
+      gcs_get_object(paste0("predictors_8km/", "srad_", time_alt[t], ".tif"), saveToDisk = paste0("predictors_8km/", "srad_", time_alt[t], ".tif"), overwrite=TRUE)
+      srad_terraclimate_sites <- rast(paste0("/home/master/cloud/predictors_8km/", "srad_", time_alt[t], ".tif"))
       #plot(srad_terraclimate_sites)
       srad_terraclimate_sites
       summary(d$srad_terraclimate_sites)
@@ -357,7 +390,8 @@ for (c in 1:nrow(crops)) {
       # Downward surface shortwave radiation. Unit W/m2. Both need to be divided by 10 to get to the original scale
       
       
-      Barrow_CO2_conc_Barrow_CO2conc <- rast(paste0("co2_", time_alt[t], ".tif"))
+      gcs_get_object(paste0("predictors_8km/", "co2_", time_alt[t], ".tif"), saveToDisk = paste0("predictors_8km/", "co2_", time_alt[t], ".tif"), overwrite=TRUE)
+      Barrow_CO2_conc_Barrow_CO2conc <- rast(paste0("/home/master/cloud/predictors_8km/", "co2_", time_alt[t], ".tif"))
       #plot(Barrow_CO2_conc_Barrow_CO2conc)
       Barrow_CO2_conc_Barrow_CO2conc
       summary(d$Barrow_CO2_conc_Barrow_CO2conc)
@@ -366,7 +400,8 @@ for (c in 1:nrow(crops)) {
       #Barrow_CO2_conc_Barrow_CO2conc <- as.data.frame(Barrow_CO2_conc_Barrow_CO2conc, xy=TRUE)
       # atm CO2 concentrations in ppm
       
-      ndvi3g_lowest_gapfilled_mean_GIMMS3g_NDVI_sites_low_quality_gapfilled <- rast(paste0("ndvi_gimms_", time[t], ".tif")) 
+      gcs_get_object(paste0("predictors_8km/", "ndvi_gimms_", time[t], ".tif"), saveToDisk = paste0("predictors_8km/", "ndvi_gimms_", time[t], ".tif"), overwrite=TRUE)
+      ndvi3g_lowest_gapfilled_mean_GIMMS3g_NDVI_sites_low_quality_gapfilled <- rast(paste0("/home/master/cloud/predictors_8km/","ndvi_gimms_", time[t], ".tif")) 
       #plot(NDVI_whittaker_constant_monthly_mean)
       ndvi3g_lowest_gapfilled_mean_GIMMS3g_NDVI_sites_low_quality_gapfilled
       summary(d$ndvi3g_lowest_gapfilled_mean_GIMMS3g_NDVI_sites_low_quality_gapfilled)
@@ -374,7 +409,8 @@ for (c in 1:nrow(crops)) {
       ndvi3g_lowest_gapfilled_mean_GIMMS3g_NDVI_sites_low_quality_gapfilled <- terra::crop(ndvi3g_lowest_gapfilled_mean_GIMMS3g_NDVI_sites_low_quality_gapfilled, ext(cropped_exent))
       #NDVI_whittaker_constant_monthly_mean <- as.data.frame(NDVI_whittaker_constant_monthly_mean, xy=TRUE)
       
-      Soil.temperature.level.1_era5_soilmoist_temp_snow <- rast(paste0("soiltemplevel1_", time[t], ".tif"))
+      gcs_get_object(paste0("predictors_8km/", "soiltemplevel1_", time[t], ".tif"), saveToDisk = paste0("predictors_8km/", "soiltemplevel1_", time[t], ".tif"), overwrite=TRUE)
+      Soil.temperature.level.1_era5_soilmoist_temp_snow <- rast(paste0("/home/master/cloud/predictors_8km/","soiltemplevel1_", time[t], ".tif"))
       #plot(Soil.temperature.level.1_era5_soilmoist_temp_snow)
       Soil.temperature.level.1_era5_soilmoist_temp_snow
       summary(d$Soil.temperature.level.1_era5_soilmoist_temp_snow)
@@ -383,7 +419,8 @@ for (c in 1:nrow(crops)) {
       #Soil.temperature.level.1_era5_soilmoist_temp_snow <- as.data.frame(Soil.temperature.level.1_era5_soilmoist_temp_snow, xy=TRUE)
       # Topsoil temp. Temperature measured in kelvin can be converted to degrees Celsius (Â°C) by subtracting 273.15.
       
-      tmean_terraclimate_sites <- rast(paste0("tmean_", time_alt[t], ".tif"))
+      gcs_get_object(paste0("predictors_8km/", "tmean_", time_alt[t], ".tif"), saveToDisk = paste0("predictors_8km/", "tmean_", time_alt[t], ".tif"), overwrite=TRUE)
+      tmean_terraclimate_sites <- rast(paste0("/home/master/cloud/predictors_8km/","tmean_", time_alt[t], ".tif"))
       #plot(vpd_terraclimate_sites)
       tmean_terraclimate_sites
       summary(d$tmean_terraclimate_sites)
@@ -392,7 +429,8 @@ for (c in 1:nrow(crops)) {
       #tmean_terraclimate_sites <- as.data.frame(tmean_terraclimate_sites, xy=TRUE)
       #  Mean annual air temperature C degrees
       
-      vpd_terraclimate_sites <- rast(paste0("vpd_", time_alt[t], ".tif"))
+      gcs_get_object(paste0("predictors_8km/", "vpd_", time_alt[t], ".tif"), saveToDisk = paste0("predictors_8km/", "vpd_", time_alt[t], ".tif"), overwrite=TRUE)
+      vpd_terraclimate_sites <- rast(paste0("/home/master/cloud/predictors_8km/","vpd_", time_alt[t], ".tif"))
       #plot(vpd_terraclimate_sites)
       vpd_terraclimate_sites
       summary(d$vpd_terraclimate_sites)
@@ -427,10 +465,21 @@ for (c in 1:nrow(crops)) {
       rm(vpd_terraclimate_sites)
       gc()
       
+      
+      # remove from disk too
+      file.remove(paste0("/home/master/cloud/predictors_8km/", "srad_", time_alt[t], ".tif"))
+      file.remove(paste0("/home/master/cloud/predictors_8km/", "co2_", time_alt[t], ".tif"))
+      file.remove(paste0("/home/master/cloud/predictors_8km/", "ndvi_gimms_", time[t], ".tif"))
+      file.remove(paste0("/home/master/cloud/predictors_8km/", "soiltemplevel1_", time[t], ".tif"))
+      file.remove(paste0("/home/master/cloud/predictors_8km/", "tmean_", time_alt[t], ".tif"))
+      file.remove(paste0("/home/master/cloud/predictors_8km/", "vpd_", time_alt[t], ".tif"))
+
+      
       print("done")
       
       # continue with the rest of dynamic rasters...
-      Snow.cover_era5_soilmoist_temp_snow <- rast(paste0("snowcover_", time[t], ".tif"))
+      gcs_get_object(paste0("predictors_8km/", "vpd_", time_alt[t], ".tif"), saveToDisk = paste0("predictors_8km/", "snowcover_", time_alt[t], ".tif"), overwrite=TRUE)
+      Snow.cover_era5_soilmoist_temp_snow <- rast(paste0("/home/master/cloud/predictors_8km/","snowcover_", time_alt[t], ".tif"))
       #plot(Snow.cover_era5_soilmoist_temp_snow)
       Snow.cover_era5_soilmoist_temp_snow
       summary(d$Snow.cover_era5_soilmoist_temp_snow)
@@ -439,7 +488,8 @@ for (c in 1:nrow(crops)) {
       #Snow.cover_era5_soilmoist_temp_snow <- as.data.frame(Snow.cover_era5_soilmoist_temp_snow, xy=TRUE)
       # Snow cover %
       
-      Volumetric.soil.water.layer.1_era5_soilmoist_temp_snow <- rast(paste0("soilmoistlevel1_", time[t], ".tif"))
+      gcs_get_object(paste0("predictors_8km/", "soilmoistlevel1_", time[t], ".tif"), saveToDisk = paste0("predictors_8km/", "soilmoistlevel1_", time[t], ".tif"), overwrite=TRUE)
+      Volumetric.soil.water.layer.1_era5_soilmoist_temp_snow <- rast(paste0("/home/master/cloud/predictors_8km/","soilmoistlevel1_", time[t], ".tif"))
       #plot(Volumetric.soil.water.layer.1_era5_soilmoist_temp_snow)
       Volumetric.soil.water.layer.1_era5_soilmoist_temp_snow
       summary(d$Volumetric.soil.water.layer.1_era5_soilmoist_temp_snow)
@@ -452,7 +502,8 @@ for (c in 1:nrow(crops)) {
       # AVHRR fields lacking data from 1994 and 2000 - use data from the previous year in this case
       if (substr(time[t],1, 4)==1994) {
         
-        Percent_TreeCover_AVHRR_VCF5KYR <- rast(paste0("Percent_TreeCover_VCF5KYR_", 1993, "001.tif"))
+        gcs_get_object(paste0("predictors_8km/", "Percent_TreeCover_VCF5KYR_", 1993, "001.tif"), saveToDisk = paste0("predictors_8km/", "Percent_TreeCover_VCF5KYR_", 1993, "001.tif"), overwrite=TRUE)
+        Percent_TreeCover_AVHRR_VCF5KYR <- rast(paste0("/home/master/cloud/predictors_8km/","Percent_TreeCover_VCF5KYR_", 1993, "001.tif"))
         print(Percent_TreeCover_AVHRR_VCF5KYR)
         #plot(Percent_TreeCover_AVHRR_VCF5KYR)
         Percent_TreeCover_AVHRR_VCF5KYR
@@ -460,7 +511,8 @@ for (c in 1:nrow(crops)) {
         Percent_TreeCover_AVHRR_VCF5KYR <- terra::crop(Percent_TreeCover_AVHRR_VCF5KYR, ext(cropped_exent))
         #Percent_TreeCover_AVHRR_VCF5KYR <- as.data.frame(Percent_TreeCover_AVHRR_VCF5KYR, xy=TRUE)
         
-        Percent_NonTree_Vegetation_AVHRR_VCF5KYR <- rast(paste0("Percent_NonTree_Vegetation_VCF5KYR_", 1993, "001.tif"))
+        gcs_get_object(paste0("predictors_8km/", "Percent_NonTree_Vegetation_VCF5KYR_", 1993, "001.tif"), saveToDisk = paste0("predictors_8km/", "Percent_NonTree_Vegetation_VCF5KYR_", 1993, "001.tif"), overwrite=TRUE)
+        Percent_NonTree_Vegetation_AVHRR_VCF5KYR <- rast(paste0("/home/master/cloud/predictors_8km/","Percent_NonTree_Vegetation_VCF5KYR_", 1993, "001.tif"))
         print(Percent_NonTree_Vegetation_AVHRR_VCF5KYR)
         #plot(Percent_NonTree_Vegetation_AVHRR_VCF5KYR)
         Percent_NonTree_Vegetation_AVHRR_VCF5KYR
@@ -468,7 +520,8 @@ for (c in 1:nrow(crops)) {
         Percent_NonTree_Vegetation_AVHRR_VCF5KYR <- terra::crop(Percent_NonTree_Vegetation_AVHRR_VCF5KYR, ext(cropped_exent))
         #Percent_NonTree_Vegetation_AVHRR_VCF5KYR <- as.data.frame(Percent_NonTree_Vegetation_AVHRR_VCF5KYR, xy=TRUE)
         
-        Percent_NonVegetated_AVHRR_VCF5KYR <- rast(paste0("Percent_NonVegetated_VCF5KYR_", 1993, "001.tif"))
+        gcs_get_object(paste0("predictors_8km/", "Percent_NonVegetated_VCF5KYR_", 1993, "001.tif"), saveToDisk = paste0("predictors_8km/", "Percent_NonVegetated_VCF5KYR_", 1993, "001.tif"), overwrite=TRUE)
+        Percent_NonVegetated_AVHRR_VCF5KYR <- rast(paste0("/home/master/cloud/predictors_8km/","Percent_NonVegetated_VCF5KYR_", 1993, "001.tif"))
         print(Percent_NonVegetated_AVHRR_VCF5KYR)
         #plot(Percent_NonVegetated_AVHRR_VCF5KYR)
         Percent_NonVegetated_AVHRR_VCF5KYR
@@ -478,8 +531,8 @@ for (c in 1:nrow(crops)) {
         
         
       } else if (substr(time[t],1, 4)==2000) {
-        
-        Percent_TreeCover_AVHRR_VCF5KYR <- rast(paste0("Percent_TreeCover_VCF5KYR_", 1999, "001.tif"))
+        gcs_get_object(paste0("predictors_8km/", "Percent_TreeCover_VCF5KYR_", 1999, "001.tif"), saveToDisk = paste0("predictors_8km/", "Percent_TreeCover_VCF5KYR_", 1999, "001.tif"), overwrite=TRUE)
+        Percent_TreeCover_AVHRR_VCF5KYR <- rast(paste0("/home/master/cloud/predictors_8km/","Percent_TreeCover_VCF5KYR_", 1999, "001.tif"))
         print(Percent_TreeCover_AVHRR_VCF5KYR)
         #plot(Percent_TreeCover_AVHRR_VCF5KYR)
         Percent_TreeCover_AVHRR_VCF5KYR
@@ -487,7 +540,8 @@ for (c in 1:nrow(crops)) {
         Percent_TreeCover_AVHRR_VCF5KYR <- terra::crop(Percent_TreeCover_AVHRR_VCF5KYR, ext(cropped_exent))
         #Percent_TreeCover_AVHRR_VCF5KYR <- as.data.frame(Percent_TreeCover_AVHRR_VCF5KYR, xy=TRUE)
         
-        Percent_NonTree_Vegetation_AVHRR_VCF5KYR <- rast(paste0("Percent_NonTree_Vegetation_VCF5KYR_", 1999, "001.tif"))
+        gcs_get_object(paste0("predictors_8km/", "Percent_NonTree_Vegetation_VCF5KYR_", 1999, "001.tif"), saveToDisk = paste0("predictors_8km/", "Percent_NonTree_Vegetation_VCF5KYR_", 1999, "001.tif"), overwrite=TRUE)
+        Percent_NonTree_Vegetation_AVHRR_VCF5KYR <- rast(paste0("/home/master/cloud/predictors_8km/","Percent_NonTree_Vegetation_VCF5KYR_", 1999, "001.tif"))
         print(Percent_NonTree_Vegetation_AVHRR_VCF5KYR)
         #plot(Percent_NonTree_Vegetation_AVHRR_VCF5KYR)
         Percent_NonTree_Vegetation_AVHRR_VCF5KYR
@@ -495,7 +549,8 @@ for (c in 1:nrow(crops)) {
         Percent_NonTree_Vegetation_AVHRR_VCF5KYR <- terra::crop(Percent_NonTree_Vegetation_AVHRR_VCF5KYR, ext(cropped_exent))
         #Percent_NonTree_Vegetation_AVHRR_VCF5KYR <- as.data.frame(Percent_NonTree_Vegetation_AVHRR_VCF5KYR, xy=TRUE)
         
-        Percent_NonVegetated_AVHRR_VCF5KYR <- rast(paste0("Percent_NonVegetated_VCF5KYR_", 1999, "001.tif"))
+        gcs_get_object(paste0("predictors_8km/", "Percent_NonVegetated_VCF5KYR_", 1999, "001.tif"), saveToDisk = paste0("predictors_8km/", "Percent_NonVegetated_VCF5KYR_", 1999, "001.tif"), overwrite=TRUE)
+        Percent_NonVegetated_AVHRR_VCF5KYR <- rast(paste0("/home/master/cloud/predictors_8km/","Percent_NonVegetated_VCF5KYR_", 1999, "001.tif"))
         print(Percent_NonVegetated_AVHRR_VCF5KYR)
         #plot(Percent_NonVegetated_AVHRR_VCF5KYR)
         Percent_NonVegetated_AVHRR_VCF5KYR
@@ -506,8 +561,8 @@ for (c in 1:nrow(crops)) {
         
       } else {
         
-        
-        Percent_TreeCover_AVHRR_VCF5KYR <- rast(paste0("Percent_TreeCover_VCF5KYR_", substr(time[t],1, 4), "001.tif"))
+        gcs_get_object(paste0("predictors_8km/", "Percent_TreeCover_VCF5KYR_", substr(time[t],1, 4), "001.tif"), saveToDisk = paste0("predictors_8km/", "Percent_TreeCover_VCF5KYR_", substr(time[t],1, 4), "001.tif"), overwrite=TRUE)
+        Percent_TreeCover_AVHRR_VCF5KYR <- rast(paste0("/home/master/cloud/predictors_8km/","Percent_TreeCover_VCF5KYR_", substr(time[t],1, 4), "001.tif"))
         print(Percent_TreeCover_AVHRR_VCF5KYR)
         #plot(Percent_TreeCover_AVHRR_VCF5KYR)
         Percent_TreeCover_AVHRR_VCF5KYR
@@ -515,7 +570,8 @@ for (c in 1:nrow(crops)) {
         Percent_TreeCover_AVHRR_VCF5KYR <- terra::crop(Percent_TreeCover_AVHRR_VCF5KYR, ext(cropped_exent))
         #Percent_TreeCover_AVHRR_VCF5KYR <- as.data.frame(Percent_TreeCover_AVHRR_VCF5KYR, xy=TRUE)
         
-        Percent_NonTree_Vegetation_AVHRR_VCF5KYR <- rast(paste0("Percent_NonTree_Vegetation_VCF5KYR_", substr(time[t],1, 4), "001.tif"))
+        gcs_get_object(paste0("predictors_8km/", "Percent_NonTree_Vegetation_VCF5KYR_", substr(time[t],1, 4), "001.tif"), saveToDisk = paste0("predictors_8km/", "Percent_NonTree_Vegetation_VCF5KYR_", substr(time[t],1, 4), "001.tif"), overwrite=TRUE)
+        Percent_NonTree_Vegetation_AVHRR_VCF5KYR <- rast(paste0("/home/master/cloud/predictors_8km/","Percent_NonTree_Vegetation_VCF5KYR_", substr(time[t],1, 4), "001.tif"))
         print(Percent_NonTree_Vegetation_AVHRR_VCF5KYR)
         #plot(Percent_NonTree_Vegetation_AVHRR_VCF5KYR)
         Percent_NonTree_Vegetation_AVHRR_VCF5KYR
@@ -523,7 +579,8 @@ for (c in 1:nrow(crops)) {
         Percent_NonTree_Vegetation_AVHRR_VCF5KYR <- terra::crop(Percent_NonTree_Vegetation_AVHRR_VCF5KYR, ext(cropped_exent))
         #Percent_NonTree_Vegetation_AVHRR_VCF5KYR <- as.data.frame(Percent_NonTree_Vegetation_AVHRR_VCF5KYR, xy=TRUE)
         
-        Percent_NonVegetated_AVHRR_VCF5KYR <- rast(paste0("Percent_NonVegetated_VCF5KYR_", substr(time[t],1, 4), "001.tif"))
+        gcs_get_object(paste0("predictors_8km/", "Percent_NonVegetated_VCF5KYR_", substr(time[t],1, 4), "001.tif"), saveToDisk = paste0("predictors_8km/", "Percent_NonVegetated_VCF5KYR_", substr(time[t],1, 4), "001.tif"), overwrite=TRUE)
+        Percent_NonVegetated_AVHRR_VCF5KYR <- rast(paste0("/home/master/cloud/predictors_8km/","Percent_NonVegetated_VCF5KYR_", substr(time[t],1, 4), "001.tif"))
         print(Percent_NonVegetated_AVHRR_VCF5KYR)
         #plot(Percent_NonVegetated_AVHRR_VCF5KYR)
         Percent_NonVegetated_AVHRR_VCF5KYR
@@ -545,7 +602,8 @@ for (c in 1:nrow(crops)) {
       gc()
       
       
-      trend_20yrprior_terra_change_id <- rast(paste0("tmean20yrprior_trend_", substr(time[t],1, 4), ".tif"))
+      gcs_get_object(paste0("predictors_8km/", "tmean20yrprior_trend_", substr(time[t],1, 4), ".tif"), saveToDisk = paste0("predictors_8km/", "tmean20yrprior_trend_", substr(time[t],1, 4), ".tif"), overwrite=TRUE)
+      trend_20yrprior_terra_change_id <- rast(paste0("/home/master/cloud/predictors_8km/","tmean20yrprior_trend_", substr(time[t],1, 4), ".tif"))
       #plot(trend_20yrprior_terra_change_id)
       trend_20yrprior_terra_change_id
       summary(d$trend_20yrprior_terra_change_id)
@@ -554,7 +612,8 @@ for (c in 1:nrow(crops)) {
       #trend_20yrprior_terra_change_id <- as.data.frame(trend_20yrprior_terra_change_id, xy=TRUE)
       # Unit annual change in mean annual air temp during the20 prior measurement years (flux and gridded data would still need to be divided by 10 to go to the orig scale)
       
-      Snow.depth_era5_soilmoist_temp_snow <- rast(paste0("snowdepth_", time[t], ".tif"))
+      gcs_get_object(paste0("predictors_8km/", "snowdepth_", time[t], ".tif"), saveToDisk = paste0("predictors_8km/", "snowdepth_", time[t], ".tif"), overwrite=TRUE)
+      Snow.depth_era5_soilmoist_temp_snow <- rast(paste0("/home/master/cloud/predictors_8km/","snowdepth_", time[t], ".tif"))
       #plot(Snow.depth_era5_soilmoist_temp_snow)
       Snow.depth_era5_soilmoist_temp_snow
       summary(d$Snow.depth_era5_soilmoist_temp_snow)
@@ -563,7 +622,8 @@ for (c in 1:nrow(crops)) {
       #Snow.depth_era5_soilmoist_temp_snow <- as.data.frame(Snow.depth_era5_soilmoist_temp_snow, xy=TRUE)
       # snow depth in meters
       
-      pr_terraclimate_sites <- rast(paste0("ppt_", time_alt[t], ".tif"))
+      gcs_get_object(paste0("predictors_8km/", "ppt_", time_alt[t], ".tif"), saveToDisk = paste0("predictors_8km/", "ppt_", time_alt[t], ".tif"), overwrite=TRUE)
+      pr_terraclimate_sites <- rast(paste0("/home/master/cloud/predictors_8km/","ppt_", time_alt[t], ".tif"))
       #plot(pr_terraclimate_sites)
       pr_terraclimate_sites
       summary(d$pr_terraclimate_sites)
@@ -572,7 +632,8 @@ for (c in 1:nrow(crops)) {
       #pr_terraclimate_sites <- as.data.frame(pr_terraclimate_sites, xy=TRUE)
       # Monthly precipitation (mm)
       
-      pdsi_terraclimate_sites <- rast(paste0("pdsi_", time_alt[t], ".tif"))
+      gcs_get_object(paste0("predictors_8km/", "pdsi_", time_alt[t], ".tif"), saveToDisk = paste0("predictors_8km/", "pdsi_", time_alt[t], ".tif"), overwrite=TRUE)
+      pdsi_terraclimate_sites <- rast(paste0("/home/master/cloud/predictors_8km/","pdsi_", time_alt[t], ".tif"))
       #plot(pdsi_terraclimate_sites)
       pdsi_terraclimate_sites
       summary(d$pdsi_terraclimate_sites)
@@ -615,6 +676,16 @@ for (c in 1:nrow(crops)) {
       
       gc()
       
+      
+      file.remove(paste0("/home/master/cloud/predictors_8km/", "vpd_", time_alt[t], ".tif"))
+      file.remove(paste0("/home/master/cloud/predictors_8km/", "soilmoistlevel1_", time[t], ".tif"))
+      file.remove(paste0("/home/master/cloud/predictors_8km/", "Percent_TreeCover_VCF5KYR_", time[t], ".tif"))
+      file.remove(paste0("/home/master/cloud/predictors_8km/", "Percent_NonTree_Vegetation_VCF5KYR_", time[t], ".tif"))
+      file.remove(paste0("/home/master/cloud/predictors_8km/", "Percent_NonVegetated_VCF5KYR_", time[t], ".tif"))
+      file.remove(paste0("/home/master/cloud/predictors_8km/", "tmean20yrprior_trend_", substr(time[t],1, 4), ".tif"))
+      file.remove(paste0("/home/master/cloud/predictors_8km/", "snowdepth_", time[t], ".tif"))
+      file.remove(paste0("/home/master/cloud/predictors_8km/", "ppt_", time_alt[t], ".tif"))
+      file.remove(paste0("/home/master/cloud/predictors_8km/", "pdsi_", time_alt[t], ".tif"))
       
       
       ### combine all
@@ -690,7 +761,7 @@ for (c in 1:nrow(crops)) {
           print(m)
           
           # Load model files
-          mod <- readRDS(paste0("/mnt/data1/boreal/avirkkala/repos/abcflux_modeling/results/", paste(i,  km, m, "train_loocv_full_model_without_larvaloutbreak", sep="_"), ".rds"))
+          mod <- readRDS(paste0("/home/master/abcflux_modeling/results/", paste(i,  km, m, "train_loocv_full_model_without_larvaloutbreak", sep="_"), ".rds"))
           mod2 = mod$finalModel #pull out the quantile regression object
           
           print("prediction started")
@@ -698,18 +769,18 @@ for (c in 1:nrow(crops)) {
           #quantiles to get for predictions
           quantiles = c(0.1, 0.5, 0.9)
           
+          #library("quantregForest")
           pred <- predict(mod2, newdata=pred_rast_final, what = quantiles) #vector of confidence intervals to predict
           
           #loop through the quantiles
           for(q in 1:length(quantiles)){
             
+            # q <- 1
             this_q = quantiles[[q]]
             
             
             #get outpath
-            out_path = file.path("/att/nobackup/jdwatts/Arctic_CO2_Upscaling/abcflux_modeling/predictions_8km_stefano", this_q)
-            dir.create(out_path, recursive = T)
-            
+            out_path = file.path("/home/master/local_outputs/predictions_8km/csv", this_q)
             
             #get the dimension of interest
             sub_pred = pred[, q]
@@ -727,11 +798,25 @@ for (c in 1:nrow(crops)) {
             
             # add cell coordinates and write out
             pred_matrix  <- data.matrix(data.frame(cbind(pred_rast[,1:2], sub_pred)))
-            write.csv(pred_matrix, file.path(out_path, paste(i,  km, m, time[t],c, "train_loocv", sep="_")), row.names=FALSE) 
+            write.csv(pred_matrix, file.path(out_path, paste(i,  km, m, time[t], "train_loocv_full_model_without_larvaloutbreak.csv", sep="_")), row.names=FALSE) 
             
+            # TEMPORARY
+            # # Google cloud settings -recapping these here because of some errors (Error in googleAuthR::gar_cache_setup(invalid_func = function(req) { : 
+            # #cannot open file 'R/x86_64-pc-linux-gnu-library/4.2/memoise/R/memoise.rdb': No such file or directory)
+            # # Auto-refreshing stale OAuth token
+            # my_project_id <- "top-operand-328213"
+            # gcs_list_buckets(my_project_id)
+            # gcs_global_bucket("abcflux_modeling_files")
+            # contents <- gcs_list_objects()
+            # gcs_upload_set_limit(50000000L) # increasing data size limit for transferring data to google cloud
+            # gcs_upload(file=file.path(out_path, paste(i,  km, m, time[t], "train_loocv_full_model_without_larvaloutbreak.csv", sep="_")), name = paste0("predictions_8km/", paste0(quantiles[[q]], "/"), paste(i,  km, m, time[t], "train_loocv_full_model_without_larvaloutbreak.csv", sep="_")))
+            # 
+            # 
             print(paste("1 km prediction raster done and written out for ", i, km, m, time[t], c))
             
-            rm(pred_matrix); rm(mod); gc()
+            rm(pred_matrix); gc()
+            #TEMPORARY
+            #file.remove(file.path(out_path, paste(i,  km, m, time[t], "train_loocv_full_model_without_larvaloutbreak.csv", sep="_")))
             
             
             
@@ -743,6 +828,7 @@ for (c in 1:nrow(crops)) {
         } # model loop
         
         print("model loop done")
+        rm(mod); rm(mod2)
         
       } # resp var loop
       
@@ -769,10 +855,11 @@ for (c in 1:nrow(crops)) {
 
 } # crop loop done
 
+setwd("/home/master/cloud") 
+gcs_get_object("predictions_8km/0.5/NEE_gC_m2_20km_qrf_1990_01_train_loocv_full_model_without_larvaloutbreak.csv", saveToDisk = "predictions_8km/0.5/NEE_gC_m2_20km_qrf_1990_01_train_loocv_full_model_without_larvaloutbreak.csv")
 
-
-
-# r <- read.csv(paste0("/mnt/data1/boreal/avirkkala/abcflux_modeling/predictions_8km/", paste(i,  km, m, time[t],c, "train_loocv", sep="_"), ".csv"))
+abcflux_modeling_files/predictions_8km/0.5/GPP_gC_m2_20km_qrf_1990_07_train_loocv_full_model_without_larvaloutbreak.csv
+# r <- read.csv("predictions_8km/0.5/NEE_gC_m2_20km_qrf_1990_01_train_loocv_full_model_without_larvaloutbreak.csv")
 # pred_rast_static_m  <- as.matrix(r[]) 
 # r <- rast(pred_rast_static_m[], type="xyz")
 # # plot(r)

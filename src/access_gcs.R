@@ -38,6 +38,25 @@ files_to_download2 <- files_to_download2[grepl("predictors_8km", files_to_downlo
 files_to_download3 <- files_to_download2[!(grepl("predictors_1km", files_to_download2) | grepl("old", files_to_download2))]
 map(files_to_download3, function(x) gcs_get_object(x, saveToDisk = x, overwrite = TRUE))
 
+
+files_to_download <- grep("*.tif", contents$name, value = TRUE)
+files_to_download2 <- files_to_download[grepl("co2", files_to_download)]
+files_to_download2 <- files_to_download2[grepl("predictors_8km", files_to_download2)]
+files_to_download3 <- files_to_download2[121:492]
+map(files_to_download3, function(x) gcs_get_object(x, saveToDisk = x, overwrite = TRUE))
+
+files_to_download <- grep("*.tif", contents$name, value = TRUE)
+files_to_download2 <- files_to_download[grepl("vpd", files_to_download)]
+files_to_download2 <- files_to_download2[grepl("predictors_8km", files_to_download2)]
+files_to_download3 <- files_to_download2[121:492]
+map(files_to_download3, function(x) gcs_get_object(x, saveToDisk = x, overwrite = TRUE))
+
+files_to_download <- grep("*.tif", contents$name, value = TRUE)
+files_to_download2 <- files_to_download[grepl("snowcover", files_to_download)]
+files_to_download2 <- files_to_download2[grepl("predictors_8km", files_to_download2)]
+files_to_download3 <- files_to_download2[479:855]
+map(files_to_download3, function(x) gcs_get_object(x, saveToDisk = x, overwrite = TRUE))
+
 files_to_download <- grep("*.csv", contents$name, value = TRUE)
 files_to_download2 <- files_to_download[grepl("predictions_8km/0.1", files_to_download)]
 files_to_download3 <- files_to_download2[(grepl("NEE", files_to_download2))]
