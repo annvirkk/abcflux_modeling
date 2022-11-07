@@ -703,35 +703,60 @@ for (c in 1:nrow(crops)) {
             
             # Load model files
             mod <- readRDS(paste0("/mnt/data1/boreal/avirkkala/repos/abcflux_modeling/results/", paste(i,  km, m, "train_loocv", v, sep="_"), ".rds"))
+            mod2 = mod$finalModel #pull out the quantile regression object
             
             print("prediction started")
             
-            library("randomForest") 
-            pred <- predict(mod, newdata=pred_rast_final)
-            pred <- unname(pred)
-            pred <- pred*1000 #multiply by 1000 so that can save in integers
-            pred <- round(pred, digits = 0)
+            #quantiles to get for predictions
+            quantiles = c(0.1, 0.5, 0.9)
+            
+            #library("quantregForest")
+            pred <- predict(mod2, newdata=pred_rast_final, what = quantiles) #vector of confidence intervals to predict
+            
+            #loop through the quantiles
+            for(q in 1:length(quantiles)){
+              
+              # q <- 1
+              this_q = quantiles[[q]]
+              
+              
+              #get outpath
+              out_path = file.path("/home/master/local_outputs/predictions_8km/csv", this_q)
+              
+              #get the dimension of interest
+              sub_pred = pred[, q]
+              
+              sub_pred <- unname(sub_pred)
+              sub_pred <- sub_pred*1000 #multiply by 1000 so that can save in integers
+              sub_pred <- round(sub_pred, digits = 0)
+              
+              
+              # remove the predictions to the model training data which were just done to fix the random forest error
+              sub_pred <- sub_pred[(nrow(modeldata1)+1):length(sub_pred)]
+              
+              
+              print("prediction to dataframe done")
+              
+              # add cell coordinates and write out
+              pred_matrix  <- data.matrix(data.frame(cbind(pred_rast[,1:2], sub_pred)))
+              write.csv(pred_matrix, file.path(out_path, paste(i,  km, m, time[t], "train_loocv", v, ".csv", sep="_")), row.names=FALSE) 
+              
+              print(paste("1 km prediction raster done and written out for ", i, km, m, time[t], c, v))
+              
+              rm(pred_matrix); gc()
+              
+              #TEMPORARY
+              
+              # filename_in=file.path(out_path, paste(i,  km, m, time[t], "train_loocv_full_model_without_larvaloutbreak.csv", sep="_"))
+              # filename_out=paste0("gs://abcflux_modeling_files/predictions_8km/csv/", paste0(quantiles[[q]], "/"), paste(i,  km, m, time[t], "train_loocv_full_model_without_larvaloutbreak.csv", sep="_"))
+              # system(paste("gsutil cp", filename_in, filename_out, sep=" ")) # unix commands. use gsutils
+              # file.remove(filename_in)
+              # 
+              
+            } # quantile loop
             
             
-            # remove the predictions to the model training data which were just done to fix the random forest error
-            pred <- pred[(nrow(modeldata1)+1):length(pred)]
-            
-            
-            print("prediction to dataframe done")
-            
-            # add cell coordinates and write out
-            pred_matrix  <- data.matrix(data.frame(cbind(pred_rast[,1:2], pred)))
-            write.csv(pred_matrix, paste0("/mnt/data1/boreal/avirkkala/abcflux_modeling/predictions_8km_subsets/", paste(i,  km, m, time[t],c, "train_loocv", v, sep="_"), ".csv"), row.names=FALSE) 
-            
-            print(paste("1 km prediction raster done and written out for ", i, km, m, time[t], c))
-            
-            rm(pred_matrix); rm(pred); rm(mod); gc()
-            
-            
-            
-            
-            
-          }
+          } # version loop
           
           
           
@@ -746,7 +771,7 @@ for (c in 1:nrow(crops)) {
       
     } # time period loop done
     
-    print("model loop done")
+    print("time loop done")
     
     rm(pred_rast)
     rm(pred_rast_final)

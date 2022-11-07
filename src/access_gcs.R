@@ -106,3 +106,21 @@ map(files_to_download2, function(x) gcs_get_object(x, saveToDisk = x, overwrite 
 
 
 gcs_get_object("cloud/flux_upscaling_data/results/final/modeldata_avg.csv", saveToDisk = "flux_upscaling_data/results/final/modeldata_avg.csv")
+
+
+
+
+
+
+
+my_project_id <- "top-operand-328213"
+gcs_list_buckets(my_project_id)
+gcs_global_bucket("abcflux_modeling_files")
+contents <- gcs_list_objects()
+gcs_upload_set_limit(50000000L) # increasing data size limit for transferring data to google cloud
+setwd("/home/master/local_outputs/")
+gcs_upload(file="trends_drivers_8km", 
+           name = )
+
+files <- list.files("trends_drivers_8km", full.names=TRUE) 
+map(files, function(x) gcs_upload(x, name = x))
