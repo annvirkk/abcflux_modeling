@@ -14,7 +14,7 @@ terraOptions(memfrac=0.9, tempdir = "/home/master/temp/")
 
 ### 8 km predictor averages 2000-2016
 
-# Download data from 2000 and 2016 from GC
+# Monthly averages
 
 avg_function <- function(var, month_format, divider) {
   
@@ -24,7 +24,7 @@ avg_function <- function(var, month_format, divider) {
     months <- c("01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12")
   }
   
-  setwd("/home/master/cloud/")
+  setwd("/home/master/")
   files_to_download <- grep("*.tif", contents$name, value = TRUE)
   files_to_download2 <- files_to_download[grepl(paste(var, "2", sep="_"), files_to_download)]
   files_to_download2 <- files_to_download2[grepl("predictors_8km", files_to_download2)]
@@ -39,31 +39,20 @@ avg_function <- function(var, month_format, divider) {
   
   map(files_to_download3, function(x) gcs_get_object(x, saveToDisk = x, overwrite = TRUE))
   
-  files_to_read <- list.files("/home/master/cloud/predictors_8km", pattern=var, full.names=TRUE)
+  files_to_read <- list.files("/home/master/predictors_8km", pattern=var, full.names=TRUE)
   
   for (m in months) {
     print(m)
     files_subset <- files_to_read[(grepl(paste0("_", m, ".tif"), files_to_read)) ]
     print(files_subset)
     r <- rast(files_to_read)
-    r <- mean(srad_terraclimate_sites)/divider
+    r <- mean(r)/divider
     
-    writeRaster(r, paste0("/home/master/local_outputs/predictors_8km_mean/", var, "_",  "mean_2002_2016", "_", m,  ".tif"), overwrite=TRUE)
+    writeRaster(r, paste0("/home/master/predictors_8km_mean/", var, "_",  "mean_2002_2016", "_", m,  ".tif"), overwrite=TRUE)
     
   }
   
   
-  # if(grepl(var, "VCF5KYR")) {
-  #   
-  #   r2 <- rast(files_to_read)
-  #   
-  #   r2 <- mean(r2)/divider
-  #   
-  #   writeRaster(r2, paste0("/home/master/local_outputs/predictors_8km_mean/", var, "_",  "mean_2002_2016", "_", m,  ".tif"), overwrite=TRUE)
-  #   
-  #   
-  # }
-  # 
 
   file.remove(files_to_download3)
   
@@ -120,6 +109,74 @@ file.remove(paste0("/home/master/cloud/predictors_8km/", "snowdepth_", time[t], 
 file.remove(paste0("/home/master/cloud/predictors_8km/", "ppt_", time_alt[t], ".tif"))
 file.remove(paste0("/home/master/cloud/predictors_8km/", "pdsi_", time_alt[t], ".tif"))
 
+
+
+# Calculate annual averages
+annual_avg_function <- function(var, divider) {
+
+  
+  setwd("/home/master/")
+  files_to_download <- grep("*.tif", contents$name, value = TRUE)
+  files_to_download2 <- files_to_download[grepl(paste(var, "2", sep="_"), files_to_download)]
+  files_to_download2 <- files_to_download2[grepl("predictors_8km", files_to_download2)]
+  files_to_download3 <- files_to_download2[!(grepl("predictors_1km", files_to_download2) | grepl("old", files_to_download2))]
+  files_to_download3 <- files_to_download3[!(grepl(paste(var, "2017", sep="_"), files_to_download3)) ]
+  files_to_download3 <- files_to_download3[!(grepl(paste(var, "2018", sep="_"), files_to_download3)) ]
+  files_to_download3 <- files_to_download3[!(grepl(paste(var, "2019", sep="_"), files_to_download3)) ]
+  files_to_download3 <- files_to_download3[!(grepl(paste(var, "2020", sep="_"), files_to_download3)) ]
+  files_to_download3 <- files_to_download3[!(grepl(paste(var, "2021", sep="_"), files_to_download3)) ]
+  files_to_download3 <- files_to_download3[!(grepl(paste(var, "2000", sep="_"), files_to_download3)) ]
+  files_to_download3 <- files_to_download3[!(grepl(paste(var, "2001", sep="_"), files_to_download3)) ]
+  
+  map(files_to_download3, function(x) gcs_get_object(x, saveToDisk = x, overwrite = TRUE))
+  
+  files_to_read <- list.files("/home/master/predictors_8km", pattern=var, full.names=TRUE)
+  
+  r <- rast(files_to_read)
+  r <- mean(r)/divider
+  
+  writeRaster(r, paste0("/home/master/predictors_8km_mean/", var, "_",  "annual_mean_2002_2016", ".tif"), overwrite=TRUE)
+  
+  file.remove(files_to_download3)
+  
+}
+
+# var <- "srad"
+# month_format <- "short"
+# divider=10
+
+
+# time alt short
+annual_avg_function("srad",  10)
+
+
+annual_avg_function("co2",  1000)
+
+annual_avg_function("ndvi_gimms", 10000)
+
+annual_avg_function("soiltemplevel1",  100)
+
+annual_avg_function("snowcover",  100)
+
+annual_avg_function("soilmoistlevel1",  100)
+
+annual_avg_function("tmean",  10)
+
+annual_avg_function("vpd",  1)
+
+annual_avg_function("tmean20yrprior_trend",  1000) # unclear
+
+annual_avg_function("snowdepth",  100)
+
+annual_avg_function("ppt",  100)
+
+annual_avg_function("pdsi",  1)
+
+annual_avg_function("Percent_TreeCover_VCF5KYR",  1)
+
+annual_avg_function("Percent_NonTree_Vegetation_VCF5KYR",  1)
+
+annual_avg_function("Percent_NonVegetated_VCF5KYR",  1)
 
 
 

@@ -8,6 +8,13 @@ library(dplyr)
 setwd("/home/master/")
 terraOptions(memfrac=0.9, tempdir = "temp/") 
 
+# Google cloud settings
+my_project_id <- "top-operand-328213"
+gcs_list_buckets(my_project_id)
+gcs_global_bucket("abcflux_modeling_files")
+contents <- gcs_list_objects()
+gcs_upload_set_limit(50000000L) # increasing data size limit for transferring data to google cloud
+
 ### 8 km predictions ###
 
 
@@ -16,15 +23,23 @@ terraOptions(memfrac=0.9, tempdir = "temp/")
 ### calculate average rasters ###
 
 
-avg_rasters <- function(flux, pattern1) {
+avg_rasters <- function(flux, pattern1, filename) {
   
   
-  # list and select files
-  files <- list.files("/home/master/local_outputs/predictions_8km/csv/0.5", pattern=paste0(pattern1, collapse="|"))
-  files <- files[str_detect(files, flux)]
-  setwd("/home/master/local_outputs/predictions_8km/csv/0.5")
+  
+  setwd("/home/master/")
+  files_to_download <- grep("*.csv", contents$name, value = TRUE)
+  files_to_download2 <- files_to_download[grepl(flux, files_to_download)]
+  files_to_download2 <- files_to_download2[grepl("predictions_8km/csv/0.5/", files_to_download2)]
+  files_to_download2 <- files_to_download2[grepl(filename, files_to_download2)]
+  
+  map(files_to_download2, function(x) gcs_get_object(x, saveToDisk = x, overwrite = TRUE))
+  
   
   # read to a data frame
+  setwd("/home/master/predictions_8km/csv/0.5")
+  files <- list.files(, pattern=flux)
+  files <- files[grepl(filename, files)]
   df <- do.call(cbind,lapply(files,read.csv)) # can do this because the number of rows is same across the predictions!
   
   # rename
@@ -62,7 +77,7 @@ avg_rasters <- function(flux, pattern1) {
     r <- rast(rasterdf[], type="xyz")
     # plot(r)
     crs(r) <- "+proj=laea +lat_0=90 +lon_0=0 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs "
-    writeRaster(r, paste0("/home/master/local_outputs/predictions_8km/raster/0.5/", flux, m, "_", pattern1, ".tif"), overwrite=TRUE, datatype="INT4S")
+    writeRaster(r, paste0("/home/master/predictions_8km/raster/0.5/", flux, m, "_", pattern1, ".tif"), overwrite=TRUE, datatype="INT4S")
     
   }
   
@@ -90,7 +105,7 @@ avg_rasters <- function(flux, pattern1) {
     r <- rast(rasterdf[], type="xyz")
     # plot(r)
     crs(r) <- "+proj=laea +lat_0=90 +lon_0=0 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs "
-    writeRaster(r, paste0("/home/master/local_outputs/predictions_8km/raster/0.5/", flux, stri_paste(months, collapse=''), "_", pattern1, "_sum.tif"), overwrite=TRUE, datatype="INT4S")
+    writeRaster(r, paste0("/home/master/predictions_8km/raster/0.5/", flux, stri_paste(months, collapse=''), "_", pattern1, "_sum.tif"), overwrite=TRUE, datatype="INT4S")
     
     
     # y <- "1982"
@@ -112,7 +127,7 @@ avg_rasters <- function(flux, pattern1) {
     r <- rast(rasterdf[], type="xyz")
     # plot(r)
     crs(r) <- "+proj=laea +lat_0=90 +lon_0=0 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs "
-    writeRaster(r, paste0("/home/master/local_outputs/predictions_8km/raster/0.5/", flux, stri_paste(months, collapse=''), "_", pattern1, "_mean.tif"), overwrite=TRUE, datatype="INT4S") 
+    writeRaster(r, paste0("/home/master/predictions_8km/raster/0.5/", flux, stri_paste(months, collapse=''), "_", pattern1, "_mean.tif"), overwrite=TRUE, datatype="INT4S") 
   
 
   
@@ -139,7 +154,7 @@ avg_rasters <- function(flux, pattern1) {
     r <- rast(rasterdf[], type="xyz")
     # plot(r)
     crs(r) <- "+proj=laea +lat_0=90 +lon_0=0 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs "
-    writeRaster(r, paste0("/home/master/local_outputs/predictions_8km/raster/0.5/", flux, stri_paste(months, collapse=''), "_", pattern1, "_sum.tif"), overwrite=TRUE, datatype="INT4S")
+    writeRaster(r, paste0("/home/master/predictions_8km/raster/0.5/", flux, stri_paste(months, collapse=''), "_", pattern1, "_sum.tif"), overwrite=TRUE, datatype="INT4S")
  
 
   
@@ -162,7 +177,7 @@ avg_rasters <- function(flux, pattern1) {
     r <- rast(rasterdf[], type="xyz")
     # plot(r)
     crs(r) <- "+proj=laea +lat_0=90 +lon_0=0 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs "
-    writeRaster(r, paste0("/home/master/local_outputs/predictions_8km/raster/0.5/", flux, stri_paste(months, collapse=''), "_", pattern1, "_mean.tif"), overwrite=TRUE, datatype="INT4S")
+    writeRaster(r, paste0("/home/master/predictions_8km/raster/0.5/", flux, stri_paste(months, collapse=''), "_", pattern1, "_mean.tif"), overwrite=TRUE, datatype="INT4S")
     
   
   
@@ -191,7 +206,7 @@ avg_rasters <- function(flux, pattern1) {
     r <- rast(rasterdf[], type="xyz")
     # plot(r)
     crs(r) <- "+proj=laea +lat_0=90 +lon_0=0 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs "
-    writeRaster(r, paste0("/home/master/local_outputs/predictions_8km/raster/0.5/", flux, stri_paste(months, collapse=''), "_", pattern1, "_sum.tif"), overwrite=TRUE, datatype="INT4S")
+    writeRaster(r, paste0("/home/master/predictions_8km/raster/0.5/", flux, stri_paste(months, collapse=''), "_", pattern1, "_sum.tif"), overwrite=TRUE, datatype="INT4S")
     
   
     # y <- "2000"
@@ -213,7 +228,7 @@ avg_rasters <- function(flux, pattern1) {
     r <- rast(rasterdf[], type="xyz")
     # plot(r)
     crs(r) <- "+proj=laea +lat_0=90 +lon_0=0 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs "
-    writeRaster(r, paste0("/home/master/local_outputs/predictions_8km/raster/0.5/", flux, stri_paste(months, collapse=''), "_", pattern1, "_mean.tif"), overwrite=TRUE, datatype="INT4S")
+    writeRaster(r, paste0("/home/master/predictions_8km/raster/0.5/", flux, stri_paste(months, collapse=''), "_", pattern1, "_mean.tif"), overwrite=TRUE, datatype="INT4S")
     
     
     
@@ -248,7 +263,7 @@ avg_rasters <- function(flux, pattern1) {
     r <- rast(rasterdf[], type="xyz")
     # plot(r)
     crs(r) <- "+proj=laea +lat_0=90 +lon_0=0 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs "
-    writeRaster(r, paste0("/home/master/local_outputs/predictions_8km/raster/0.5/", flux, stri_paste(months, collapse=''), "_", pattern1, "_sum.tif"), overwrite=TRUE, datatype="INT4S")
+    writeRaster(r, paste0("/home/master/predictions_8km/raster/0.5/", flux, stri_paste(months, collapse=''), "_", pattern1, "_sum.tif"), overwrite=TRUE, datatype="INT4S")
 
     
     # y <- "1982"
@@ -270,7 +285,7 @@ avg_rasters <- function(flux, pattern1) {
     r <- rast(rasterdf[], type="xyz")
     # plot(r)
     crs(r) <- "+proj=laea +lat_0=90 +lon_0=0 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs "
-    writeRaster(r, paste0("/home/master/local_outputs/predictions_8km/raster/0.5/", flux, stri_paste(months, collapse=''), "_", pattern1, "_mean.tif"), overwrite=TRUE, datatype="INT4S")
+    writeRaster(r, paste0("/home/master/predictions_8km/raster/0.5/", flux, stri_paste(months, collapse=''), "_", pattern1, "_mean.tif"), overwrite=TRUE, datatype="INT4S")
   
   print("GS done")
   
@@ -302,7 +317,7 @@ avg_rasters <- function(flux, pattern1) {
     r <- rast(rasterdf[], type="xyz")
     # plot(r)
     crs(r) <- "+proj=laea +lat_0=90 +lon_0=0 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs "
-    writeRaster(r, paste0("/home/master/local_outputs/predictions_8km/raster/0.5/", flux, "_", pattern1, "_sum.tif"), overwrite=TRUE, datatype="INT4S")
+    writeRaster(r, paste0("/home/master/predictions_8km/raster/0.5/", flux, "_", pattern1, "_sum.tif"), overwrite=TRUE, datatype="INT4S")
     
   
   
@@ -317,13 +332,16 @@ avg_rasters <- function(flux, pattern1) {
   
   
   # list and select files
-  files <- list.files("/home/master/local_outputs/predictions_8km/csv/0.5", pattern=paste0(pattern1, collapse="|"))
+  # files <- list.files("/home/master/predictions_8km/csv/0.5", pattern=paste0(pattern1, collapse="|")) # old way?
+  files <- list.files("/home/master/predictions_8km/csv/0.5", pattern=pattern1)
+  files <- files[str_detect(files, flux)]
   files <- files[!str_detect(files, "_12")] # remove december from the same year
-  files2 <- list.files("/home/master/local_outputs/predictions_8km/csv/0.5", pattern=paste0(as.numeric(pattern1)-1, collapse="|"))
+  files2 <- list.files("/home/master/predictions_8km/csv/0.5", pattern=paste0(as.numeric(pattern1)-1, collapse="|"))
   files2 <- files2[str_detect(files2, "_12")]
+  files2 <- files2[str_detect(files2, flux)]
   files <- c(files, files2)
   files <- files[str_detect(files, flux)]
-  setwd("/home/master/local_outputs/predictions_8km/csv/0.5")
+  setwd("/home/master/predictions_8km/csv/0.5")
   
   # read to a data frame
   df <- do.call(cbind,lapply(files,read.csv)) # can do this because the number of rows is same across the predictions!
@@ -363,7 +381,7 @@ avg_rasters <- function(flux, pattern1) {
       r <- rast(rasterdf[], type="xyz")
       # plot(r)
       crs(r) <- "+proj=laea +lat_0=90 +lon_0=0 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs "
-      writeRaster(r, paste0("/home/master/local_outputs/predictions_8km/raster/0.5/", flux, stri_paste(months, collapse=''), "_", pattern1, "_sum.tif"), overwrite=TRUE, datatype="INT4S")
+      writeRaster(r, paste0("/home/master/predictions_8km/raster/0.5/", flux, stri_paste(months, collapse=''), "_", pattern1, "_sum.tif"), overwrite=TRUE, datatype="INT4S")
       
       
 
@@ -375,7 +393,7 @@ avg_rasters <- function(flux, pattern1) {
       r <- rast(rasterdf[], type="xyz")
       # plot(r)
       crs(r) <- "+proj=laea +lat_0=90 +lon_0=0 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs "
-      writeRaster(r, paste0("/home/master/local_outputs/predictions_8km/raster/0.5/", flux, stri_paste(months, collapse=''), "_", pattern1, "_mean.tif"), overwrite=TRUE, datatype="INT4S")
+      writeRaster(r, paste0("/home/master/predictions_8km/raster/0.5/", flux, stri_paste(months, collapse=''), "_", pattern1, "_mean.tif"), overwrite=TRUE, datatype="INT4S")
     
   }
   
@@ -388,13 +406,13 @@ avg_rasters <- function(flux, pattern1) {
   
   
   # list and select files
-  files <- list.files("/home/master/local_outputs/predictions_8km/csv/0.5", pattern=paste0(pattern1, collapse="|"))
+  files <- list.files("/home/master/predictions_8km/csv/0.5", pattern=paste0(pattern1, collapse="|"))
   files <- files[!(str_detect(files, "_12") | str_detect(files, "_11") | str_detect(files, "_10"))]# remove december from the same year
-  files2 <- list.files("/home/master/local_outputs/predictions_8km/csv/0.5", pattern=paste0(as.numeric(pattern1)-1, collapse="|"))
+  files2 <- list.files("/home/master/predictions_8km/csv/0.5", pattern=paste0(as.numeric(pattern1)-1, collapse="|"))
   files2 <- files2[str_detect(files2, "_12") | str_detect(files2, "_11") | str_detect(files2, "_10") ]
   files <- c(files, files2)
   files <- files[str_detect(files, flux)]
-  setwd("/home/master/local_outputs/predictions_8km/csv/0.5")
+  setwd("/home/master/predictions_8km/csv/0.5")
   
   # read to a data frame
   df <- do.call(cbind,lapply(files,read.csv)) # can do this because the number of rows is same across the predictions!
@@ -437,7 +455,7 @@ avg_rasters <- function(flux, pattern1) {
       r <- rast(rasterdf[], type="xyz")
       # plot(r)
       crs(r) <- "+proj=laea +lat_0=90 +lon_0=0 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs "
-      writeRaster(r, paste0("/home/master/local_outputs/predictions_8km/raster/0.5/", flux, stri_paste(months, collapse=''), "_", pattern1, "_sum.tif"), overwrite=TRUE, datatype="INT4S")
+      writeRaster(r, paste0("/home/master/predictions_8km/raster/0.5/", flux, stri_paste(months, collapse=''), "_", pattern1, "_sum.tif"), overwrite=TRUE, datatype="INT4S")
       
       
       df3 <- df2  %>% mutate(sum = rowMeans(.[, 3:ncol(df2)]))
@@ -448,7 +466,7 @@ avg_rasters <- function(flux, pattern1) {
       r <- rast(rasterdf[], type="xyz")
       # plot(r)
       crs(r) <- "+proj=laea +lat_0=90 +lon_0=0 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs "
-      writeRaster(r, paste0("/home/master/local_outputs/predictions_8km/raster/0.5/", flux, stri_paste(months, collapse=''), "_", pattern1, "_mean.tif"), overwrite=TRUE, datatype="INT4S")
+      writeRaster(r, paste0("/home/master/predictions_8km/raster/0.5/", flux, stri_paste(months, collapse=''), "_", pattern1, "_mean.tif"), overwrite=TRUE, datatype="INT4S")
       
     }
     
@@ -459,6 +477,8 @@ avg_rasters <- function(flux, pattern1) {
   
   
   print("all done")
+  setwd("/home/master/")
+  file.remove(files_to_download2)
   
   
   
@@ -466,60 +486,96 @@ avg_rasters <- function(flux, pattern1) {
   
 }
 
-years <- seq(1990, 2016, by=1)
+years <- seq(2000, 2016, by=1)
 
 for (y in years) {
   
-  avg_rasters(flux="NEE_gC_m2", pattern1=seq(y, y, by=1)%>% as.character())
+  avg_rasters(flux="NEE_gC_m2", pattern1=seq(y, y, by=1)%>% as.character(), filname="full_model_without_larvaloutbreak")
+  
+}
+
+for (y in years) {
+  
+  avg_rasters(flux="GPP_gC_m2", pattern1=seq(y, y, by=1)%>% as.character(), filename="full_model_without_larvaloutbreak")
+  
+}
+
+for (y in years) {
+  
+  avg_rasters(flux="Reco_gC_m2", pattern1=seq(y, y, by=1)%>% as.character(), filename="full_model_without_larvaloutbreak")
   
 }
 
 
 
-# average annual, gs, and ngs fluxes
-setwd("/home/master/local_outputs/predictions_8km/raster/0.5/")
+
+# average annual gpp and reco, and the budget from them
+files <- list.files("/home/master/predictions_8km/raster/0.5/", pattern="Reco")
+files <- files[nchar(files)==23]
+setwd("/home/master/predictions_8km/raster/0.5/")
+reco <- rast(files)
+reco <- mean(reco)/1000
+
+
+
+files <- list.files("/home/master/predictions_8km/raster/0.5/", pattern="GPP")
+files <- files[nchar(files)==22]
+setwd("/home/master/predictions_8km/raster/0.5/")
+gpp <- rast(files)
+gpp <- mean(gpp)/1000
+
+
+nee=gpp+reco
+
+writeRaster(reco, "/home/master/predictions_8km/raster/0.5/Reco_gC_m2_2000_2016_sum_mean.tif", overwrite=TRUE)
+writeRaster(gpp, "/home/master/predictions_8km/raster/0.5/GPP_gC_m2_2000_2016_sum_mean.tif", overwrite=TRUE)
+writeRaster(nee, "/home/master/predictions_8km/raster/0.5/NEE_from_GPPReco_m2_2000_2016_sum_mean.tif", overwrite=TRUE)
+
+
+# average annual, gs, and ngs fluxes of nee
+setwd("/home/master/predictions_8km/raster/0.5/")
 
 # virkkala 1990-2015
-files <- list.files("/home/master/local_outputs/predictions_8km/raster/0.5/")
+files <- list.files("/home/master/predictions_8km/raster/0.5/")
 files2 <- files[nchar(files)==18]
 files3 <- files2[9:34]
-setwd("/home/master/local_outputs/predictions_8km/raster/0.5/")
+setwd("/home/master/predictions_8km/raster/0.5/")
 r <- rast(files3)
 r2 <- mean(r)
-writeRaster(r2, "/home/master/local_outputs/predictions_8km/raster/0.5/NEE_annual_avg_19902015.tif", overwrite=TRUE, datatype="INT4S")
+writeRaster(r2, "/home/master/predictions_8km/raster/0.5/NEE_annual_avg_19902015.tif", overwrite=TRUE, datatype="INT4S")
 
 # natali 2003-2016
-files <- list.files("/home/master/local_outputs/predictions_8km/raster/0.5/", pattern="01_02_03_04_10_11_12")
+files <- list.files("/home/master/predictions_8km/raster/0.5/", pattern="01_02_03_04_10_11_12")
 files3 <- files[22:35]
 r <- rast(files3)
 r2 <- mean(r)
-writeRaster(r2, "/home/master/local_outputs/predictions_8km/raster/0.5/NEE_ngs_avg_20032016.tif", overwrite=TRUE, datatype="INT4S")
+writeRaster(r2, "/home/master/predictions_8km/raster/0.5/NEE_ngs_avg_20032016.tif", overwrite=TRUE, datatype="INT4S")
 
 # natali 2003-2016
-files <- list.files("/home/master/local_outputs/predictions_8km/raster/0.5/", pattern="01_02_03_04_10_11_12")
+files <- list.files("/home/master/predictions_8km/raster/0.5/", pattern="01_02_03_04_10_11_12")
 files3 <- files[22:35]
 r <- rast(files3)
 r2 <- mean(r)
-writeRaster(r2, "/home/master/local_outputs/predictions_8km/raster/0.5/NEE_ngs_avg_20032016.tif", overwrite=TRUE, datatype="INT4S")
+writeRaster(r2, "/home/master/predictions_8km/raster/0.5/NEE_ngs_avg_20032016.tif", overwrite=TRUE, datatype="INT4S")
 
 
 # here 1990-2016
-files <- list.files("/home/master/local_outputs/predictions_8km/raster/0.5/")
+files <- list.files("/home/master/predictions_8km/raster/0.5/")
 files3 <- files[nchar(files)==22]
 r <- rast(files3)
 r2 <- mean(r)
-writeRaster(r2, "/home/master/local_outputs/predictions_8km/raster/0.5/NEE_avg_19902016.tif", overwrite=TRUE, datatype="INT4S")
+writeRaster(r2, "/home/master/predictions_8km/raster/0.5/NEE_avg_19902016.tif", overwrite=TRUE, datatype="INT4S")
 
-files <- list.files("/home/master/local_outputs/predictions_8km/raster/0.5/", pattern="01_02_03_04_10_11_12")
+files <- list.files("/home/master/predictions_8km/raster/0.5/", pattern="01_02_03_04_10_11_12")
 files3 <- files[str_detect(files, "sum")]
 r <- rast(files3)
 r2 <- mean(r)
-writeRaster(r2, "/home/master/local_outputs/predictions_8km/raster/0.5/NEE_avg_19902016_ngs.tif", overwrite=TRUE, datatype="INT4S")
+writeRaster(r2, "/home/master/predictions_8km/raster/0.5/NEE_avg_19902016_ngs.tif", overwrite=TRUE, datatype="INT4S")
 
 
-files <- list.files("/home/master/local_outputs/predictions_8km/raster/0.5/", pattern="05_06_07_08")
+files <- list.files("/home/master/predictions_8km/raster/0.5/", pattern="05_06_07_08")
 files3 <- files[str_detect(files, "sum")]
 r <- rast(files3)
 r2 <- mean(r)
-writeRaster(r2, "/home/master/local_outputs/predictions_8km/raster/0.5/NEE_avg_19902016_gs.tif", overwrite=TRUE, datatype="INT4S")
+writeRaster(r2, "/home/master/predictions_8km/raster/0.5/NEE_avg_19902016_gs.tif", overwrite=TRUE, datatype="INT4S")
 

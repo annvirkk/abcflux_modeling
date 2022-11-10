@@ -163,6 +163,7 @@ for (c in 1:nrow(crops)) {
       # 80 Tree cover, needleleaved, deciduous, 90 mixed tree cover, 120 Sparse vegetation (boreal), 160 Wetland (boreal)
       # note that older versions of terra package might not read this file correctly for some reason (instead of classes there are raster counts)
       
+      setwd("/home/master/predictors_8km") 
       
       gcs_get_object("predictors_8km/abovegroundbiomass.tif", saveToDisk = "predictors_8km/abovegroundbiomass.tif")
       aboveground_biomass_carbon_2010_Above_belowground_biomass <- rast("abovegroundbiomass.tif")
