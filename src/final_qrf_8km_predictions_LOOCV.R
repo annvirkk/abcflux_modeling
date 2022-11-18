@@ -22,19 +22,19 @@ library(purrr, lib.loc="R/x86_64-pc-linux-gnu-library/4.2")
 library("quantregForest", lib.loc="R/x86_64-pc-linux-gnu-library/4.2")
 
 # 
-# # Use these for running in Rstudio
-# library("sp")
-# library("ggplot2")
-# library("caret")
-# library("dplyr")
-# library("purrr")
-# library("raster")
-# library("terra")
-# #install.packages('terra', repos='https://rspatial.r-universe.dev', lib="/mnt/data1/boreal/avirkkala/packages")
-# library(stringr)
-# library(googleCloudStorageR)
-# library(purrr)
-# library("quantregForest")
+# Use these for running in Rstudio
+library("sp")
+library("ggplot2")
+library("caret")
+library("dplyr")
+library("purrr")
+library("raster")
+library("terra")
+#install.packages('terra', repos='https://rspatial.r-universe.dev', lib="/mnt/data1/boreal/avirkkala/packages")
+library(stringr)
+library(googleCloudStorageR)
+library(purrr)
+library("quantregForest")
 
 
 
@@ -111,7 +111,7 @@ kms <- c("20km")
 
 
 ### Time periods for the monthly predictions
-time <- seq(as.Date("1998/01/01"), as.Date("2016/12/31"), "months") 
+time <- seq(as.Date("1990/01/01"), as.Date("2016/12/31"), "months") 
 time <- substr(time, 1, 7)
 time <- sub("-", "_", sub("_", "", time, fixed=TRUE), fixed=TRUE)
 time_alt <- gsub("_0", "_", time)
@@ -162,11 +162,10 @@ for (c in 1:nrow(crops)) {
       # 50 Tree cover, broadleaved, evergreen, 60 Tree cover, broadleaved, deciduous, 70 Tree cover, needleleaved, evergreen
       # 80 Tree cover, needleleaved, deciduous, 90 mixed tree cover, 120 Sparse vegetation (boreal), 160 Wetland (boreal)
       # note that older versions of terra package might not read this file correctly for some reason (instead of classes there are raster counts)
+
       
-      setwd("/home/master/predictors_8km") 
-      
-      gcs_get_object("predictors_8km/abovegroundbiomass.tif", saveToDisk = "predictors_8km/abovegroundbiomass.tif")
-      aboveground_biomass_carbon_2010_Above_belowground_biomass <- rast("abovegroundbiomass.tif")
+      gcs_get_object("predictors_8km/abovegroundbiomass.tif", saveToDisk = "predictors_8km/abovegroundbiomass.tif", overwrite=TRUE)
+      aboveground_biomass_carbon_2010_Above_belowground_biomass <- rast("predictors_8km/abovegroundbiomass.tif")
       #plot(aboveground_biomass_carbon_2010_Above_belowground_biomass)
       aboveground_biomass_carbon_2010_Above_belowground_biomass
       summary(d$aboveground_biomass_carbon_2010_Above_belowground_biomass)
@@ -175,8 +174,8 @@ for (c in 1:nrow(crops)) {
       #aboveground_biomass_carbon_2010_Above_belowground_biomass <- as.data.frame(aboveground_biomass_carbon_2010_Above_belowground_biomass, xy=TRUE)
       # Unit MgC/ha
       
-      gcs_get_object("predictors_8km/Terraclimate_averages_tmean.tif", saveToDisk = "predictors_8km/Terraclimate_averages_tmean.tif")
-      tmean_TerraClimate_averages <-  rast("Terraclimate_averages_tmean.tif")
+      gcs_get_object("predictors_8km/Terraclimate_averages_tmean.tif", saveToDisk = "predictors_8km/Terraclimate_averages_tmean.tif", overwrite=TRUE)
+      tmean_TerraClimate_averages <-  rast("predictors_8km/Terraclimate_averages_tmean.tif")
       #plot(tmean_TerraClimate_averages)
       tmean_TerraClimate_averages
       summary(d$tmean_TerraClimate_averages)
@@ -185,8 +184,8 @@ for (c in 1:nrow(crops)) {
       #tmean_TerraClimate_averages <- as.data.frame(tmean_TerraClimate_averages, xy=TRUE)
       # Unit C degrees
       
-      gcs_get_object("predictors_8km/soc.tif", saveToDisk = "predictors_8km/soc.tif")
-      SoilGrids_SOC_SoilGrids_SOCstock <-  rast("soc.tif")
+      gcs_get_object("predictors_8km/soc.tif", saveToDisk = "predictors_8km/soc.tif", overwrite=TRUE)
+      SoilGrids_SOC_SoilGrids_SOCstock <-  rast("predictors_8km/soc.tif")
       #plot(SoilGrids_SOC_SoilGrids_SOCstock)
       SoilGrids_SOC_SoilGrids_SOCstock
       summary(d$SoilGrids_SOC_SoilGrids_SOCstock)
@@ -195,8 +194,8 @@ for (c in 1:nrow(crops)) {
       #SoilGrids_SOC_SoilGrids_SOCstock <- as.data.frame(SoilGrids_SOC_SoilGrids_SOCstock, xy=TRUE)
       # Unit tonnes per ha
       
-      gcs_get_object("predictors_8km/roughscale.tif", saveToDisk = "predictors_8km/roughscale.tif")
-      dtm_rough.scale_merit.dem_m_250m_s0..0cm_2018_v1.0_MERIT_topo_indices_250m <- rast("roughscale.tif")
+      gcs_get_object("predictors_8km/roughscale.tif", saveToDisk = "predictors_8km/roughscale.tif", overwrite=TRUE)
+      dtm_rough.scale_merit.dem_m_250m_s0..0cm_2018_v1.0_MERIT_topo_indices_250m <- rast("predictors_8km/roughscale.tif")
       #plot(dtm_rough.scale_merit.dem_m_250m_s0..0cm_2018_v1.0_MERIT_topo_indices_250m)
       dtm_rough.scale_merit.dem_m_250m_s0..0cm_2018_v1.0_MERIT_topo_indices_250m
       summary(d$dtm_rough.scale_merit.dem_m_250m_s0..0cm_2018_v1.0_MERIT_topo_indices_250m)
@@ -207,8 +206,8 @@ for (c in 1:nrow(crops)) {
       # Scale of the maximum multiscale deviation
       
       
-      gcs_get_object("predictors_8km/belowgroundbiomass.tif", saveToDisk = "predictors_8km/belowgroundbiomass.tif")
-      belowground_biomass_carbon_2010_Above_belowground_biomass <- rast("belowgroundbiomass.tif") 
+      gcs_get_object("predictors_8km/belowgroundbiomass.tif", saveToDisk = "predictors_8km/belowgroundbiomass.tif", overwrite=TRUE)
+      belowground_biomass_carbon_2010_Above_belowground_biomass <- rast("predictors_8km/belowgroundbiomass.tif") 
       #plot(belowground_biomass_carbon_2010_Above_belowground_biomass)
       belowground_biomass_carbon_2010_Above_belowground_biomass
       summary(d$belowground_biomass_carbon_2010_Above_belowground_biomass)
@@ -218,8 +217,8 @@ for (c in 1:nrow(crops)) {
       # Unit MgC/ha
       
       
-      gcs_get_object("predictors_8km/bulkdensity.tif", saveToDisk = "predictors_8km/bulkdensity.tif")
-      BLDFIE_M_sl1_250m_ll_SoilGrids <- rast("bulkdensity.tif")
+      gcs_get_object("predictors_8km/bulkdensity.tif", saveToDisk = "predictors_8km/bulkdensity.tif", overwrite=TRUE)
+      BLDFIE_M_sl1_250m_ll_SoilGrids <- rast("predictors_8km/bulkdensity.tif")
       #plot(BLDFIE_M_sl1_250m_ll_SoilGrids)
       BLDFIE_M_sl1_250m_ll_SoilGrids
       summary(d$BLDFIE_M_sl1_250m_ll_SoilGrids)
@@ -228,8 +227,8 @@ for (c in 1:nrow(crops)) {
       #BLDFIE_M_sl1_250m_ll_SoilGrids <- as.data.frame(BLDFIE_M_sl1_250m_ll_SoilGrids, xy=TRUE)
       # kg m-3
       
-      gcs_get_object("predictors_8km/cti.tif", saveToDisk = "predictors_8km/cti.tif")
-      dtm_cti_merit.dem_m_250m_s0..0cm_2018_v1.0_MERIT_topo_indices_250m <- rast("cti.tif")
+      gcs_get_object("predictors_8km/cti.tif", saveToDisk = "predictors_8km/cti.tif", overwrite=TRUE)
+      dtm_cti_merit.dem_m_250m_s0..0cm_2018_v1.0_MERIT_topo_indices_250m <- rast("predictors_8km/cti.tif")
       #plot(dtm_cti_merit.dem_m_250m_s0..0cm_2018_v1.0_MERIT_topo_indices_250m)
       dtm_cti_merit.dem_m_250m_s0..0cm_2018_v1.0_MERIT_topo_indices_250m
       summary(d$dtm_cti_merit.dem_m_250m_s0..0cm_2018_v1.0_MERIT_topo_indices_250m)
@@ -238,8 +237,8 @@ for (c in 1:nrow(crops)) {
       #dtm_cti_merit.dem_m_250m_s0..0cm_2018_v1.0_MERIT_topo_indices_250m <- as.data.frame(dtm_cti_merit.dem_m_250m_s0..0cm_2018_v1.0_MERIT_topo_indices_250m, xy=TRUE)
       # Compound topographic index, high value= high topographic moisture
       
-      gcs_get_object("predictors_8km/sol_watercontent.tif", saveToDisk = "predictors_8km/sol_watercontent.tif")
-      sol_watercontent.1500kPa_usda.3c2a1a_m_250m_b0..0cm_1950..2017_v0.1_SoilGrids_watercontent <- rast("sol_watercontent.tif")
+      gcs_get_object("predictors_8km/sol_watercontent.tif", saveToDisk = "predictors_8km/sol_watercontent.tif", overwrite=TRUE)
+      sol_watercontent.1500kPa_usda.3c2a1a_m_250m_b0..0cm_1950..2017_v0.1_SoilGrids_watercontent <- rast("predictors_8km/sol_watercontent.tif")
       #plot(sol_watercontent.1500kPa_usda.3c2a1a_m_250m_b0..0cm_1950..2017_v0.1_SoilGrids_watercontent)
       sol_watercontent.1500kPa_usda.3c2a1a_m_250m_b0..0cm_1950..2017_v0.1_SoilGrids_watercontent
       summary(d$sol_watercontent.1500kPa_usda.3c2a1a_m_250m_b0..0cm_1950..2017_v0.1_SoilGrids_watercontent)
@@ -248,8 +247,8 @@ for (c in 1:nrow(crops)) {
       #sol_watercontent.1500kPa_usda.3c2a1a_m_250m_b0..0cm_1950..2017_v0.1_SoilGrids_watercontent <- as.data.frame(sol_watercontent.1500kPa_usda.3c2a1a_m_250m_b0..0cm_1950..2017_v0.1_SoilGrids_watercontent, xy=TRUE)
       # Soil water content (volumetric %) for 1500kPa suction
       
-      gcs_get_object("predictors_8km/Terraclimate_averages_ppt.tif", saveToDisk = "predictors_8km/Terraclimate_averages_ppt.tif")
-      ppt_TerraClimate_averages <- rast("Terraclimate_averages_ppt.tif")
+      gcs_get_object("predictors_8km/Terraclimate_averages_ppt.tif", saveToDisk = "predictors_8km/Terraclimate_averages_ppt.tif", overwrite=TRUE)
+      ppt_TerraClimate_averages <- rast("predictors_8km/Terraclimate_averages_ppt.tif")
       #plot(ppt_TerraClimate_averages)
       ppt_TerraClimate_averages
       summary(d$ppt_TerraClimate_averages)
@@ -258,8 +257,8 @@ for (c in 1:nrow(crops)) {
       #ppt_TerraClimate_averages <- as.data.frame(ppt_TerraClimate_averages, xy=TRUE)
       # cumulative precipitation (mm)
       
-      gcs_get_object("predictors_8km/ndvi_trend_19812010.tif", saveToDisk = "predictors_8km/ndvi_trend_19812010.tif")
-      ndvi_trend_19812010 <-  rast("ndvi_trend_19812010.tif") 
+      gcs_get_object("predictors_8km/ndvi_trend_19812010.tif", saveToDisk = "predictors_8km/ndvi_trend_19812010.tif", overwrite=TRUE)
+      ndvi_trend_19812010 <-  rast("predictors_8km/ndvi_trend_19812010.tif") 
       #plot(ndvi_trend_19812010)
       ndvi_trend_19812010
       summary(d$ndvi_trend_19812010)
@@ -268,8 +267,8 @@ for (c in 1:nrow(crops)) {
       #ndvi_trend_19812010 <- as.data.frame(ndvi_trend_19812010, xy=TRUE)
       # NDVI trend per year
       
-      gcs_get_object("predictors_8km/ph.tif", saveToDisk = "predictors_8km/ph.tif")
-      PHIHOX_M_sl1_250m_ll_SoilGrids <- rast("ph.tif")
+      gcs_get_object("predictors_8km/ph.tif", saveToDisk = "predictors_8km/ph.tif", overwrite=TRUE)
+      PHIHOX_M_sl1_250m_ll_SoilGrids <- rast("predictors_8km/ph.tif")
       #plot(PHIHOX_M_sl1_250m_ll_SoilGrids)
       PHIHOX_M_sl1_250m_ll_SoilGrids
       summary(d$PHIHOX_M_sl1_250m_ll_SoilGrids)
@@ -278,8 +277,8 @@ for (c in 1:nrow(crops)) {
       #PHIHOX_M_sl1_250m_ll_SoilGrids <- as.data.frame(PHIHOX_M_sl1_250m_ll_SoilGrids, xy=TRUE)
       
       
-      gcs_get_object("predictors_8km/tmean_trend_19601990.tif", saveToDisk = "predictors_8km/tmean_trend_19601990.tif")
-      terra_trend_19601990 <- rast("tmean_trend_19601990.tif")
+      gcs_get_object("predictors_8km/tmean_trend_19601990.tif", saveToDisk = "predictors_8km/tmean_trend_19601990.tif", overwrite=TRUE)
+      terra_trend_19601990 <- rast("predictors_8km/tmean_trend_19601990.tif")
       #plot(terra_trend_19601990)
       terra_trend_19601990
       summary(d$terra_trend_19601990)
@@ -289,8 +288,8 @@ for (c in 1:nrow(crops)) {
       # Unit: temperature change per year (both flux data and raster data need to be divided by 10 to come to the original scale)
       
       
-      gcs_get_object("predictors_8km/UiO_PEX_PERPROB_5.0_20181128_2000_2016_NH.tif", saveToDisk = "predictors_8km/UiO_PEX_PERPROB_5.0_20181128_2000_2016_NH.tif")
-      UiO_PEX_PERPROB_5.0_20181128_2000_2016_NH_UiO_PEX_20181128_2000_2016_NH <- rast("UiO_PEX_PERPROB_5.0_20181128_2000_2016_NH.tif")
+      gcs_get_object("predictors_8km/UiO_PEX_PERPROB_5.0_20181128_2000_2016_NH.tif", saveToDisk = "predictors_8km/UiO_PEX_PERPROB_5.0_20181128_2000_2016_NH.tif", overwrite=TRUE)
+      UiO_PEX_PERPROB_5.0_20181128_2000_2016_NH_UiO_PEX_20181128_2000_2016_NH <- rast("predictors_8km/UiO_PEX_PERPROB_5.0_20181128_2000_2016_NH.tif")
       #plot(UiO_PEX_PERPROB_5.0_20181128_2000_2016_NH_UiO_PEX_20181128_2000_2016_NH)
       UiO_PEX_PERPROB_5.0_20181128_2000_2016_NH_UiO_PEX_20181128_2000_2016_NH
       summary(d$UiO_PEX_PERPROB_5.0_20181128_2000_2016_NH_UiO_PEX_20181128_2000_2016_NH)
@@ -299,8 +298,8 @@ for (c in 1:nrow(crops)) {
       #UiO_PEX_PERPROB_5.0_20181128_2000_2016_NH_UiO_PEX_20181128_2000_2016_NH <- as.data.frame(UiO_PEX_PERPROB_5.0_20181128_2000_2016_NH_UiO_PEX_20181128_2000_2016_NH, xy=TRUE)
       # Permafrost probability (fraction 0-1)
       
-      gcs_get_object("predictors_8km/Circumpolar_Thermokarst_Landscapes_TKWP.tif", saveToDisk = "predictors_8km/Circumpolar_Thermokarst_Landscapes_TKWP.tif")
-      TKWP_Thermokarst <- rast("Circumpolar_Thermokarst_Landscapes_TKWP.tif")
+      gcs_get_object("predictors_8km/Circumpolar_Thermokarst_Landscapes_TKWP.tif", saveToDisk = "predictors_8km/Circumpolar_Thermokarst_Landscapes_TKWP.tif", overwrite=TRUE)
+      TKWP_Thermokarst <- rast("predictors_8km/Circumpolar_Thermokarst_Landscapes_TKWP.tif")
       #plot(TKWP_Thermokarst)
       summary(d$TKWP_Thermokarst)
       TKWP_Thermokarst <- terra::crop(TKWP_Thermokarst, ext(cropped_exent))
@@ -309,7 +308,7 @@ for (c in 1:nrow(crops)) {
       
       
       gcs_get_object("predictors_8km/Circumpolar_Thermokarst_Landscapes_TKHP.tif", saveToDisk = "predictors_8km/Circumpolar_Thermokarst_Landscapes_TKHP.tif", overwrite=TRUE)
-      TKHP_Thermokarst <- rast("Circumpolar_Thermokarst_Landscapes_TKHP.tif")
+      TKHP_Thermokarst <- rast("predictors_8km/Circumpolar_Thermokarst_Landscapes_TKHP.tif")
       #plot(TKHP_Thermokarst)
       summary(d$TKHP_Thermokarst)
       TKHP_Thermokarst <- terra::crop(TKHP_Thermokarst, ext(cropped_exent))
@@ -319,8 +318,8 @@ for (c in 1:nrow(crops)) {
       
       
       
-      gcs_get_object("predictors_8km/forest_age.tif", saveToDisk = "predictors_8km/forest_age.tif")
-      forest_age_class_forest_age_sites <- rast("forest_age.tif")
+      gcs_get_object("predictors_8km/forest_age.tif", saveToDisk = "predictors_8km/forest_age.tif", overwrite=TRUE)
+      forest_age_class_forest_age_sites <- rast("predictors_8km/forest_age.tif")
       #NAflag(forest_age_class_forest_age_sites)<-0 # not working in kubernetes
       #plot(forest_age_class_forest_age_sites)
       forest_age_class_forest_age_sites 
@@ -782,7 +781,7 @@ for (c in 1:nrow(crops)) {
           print(m)
           
           # Load model files
-          mod <- readRDS(paste0("/home/master/abcflux_modeling/results/", paste(i,  km, m, "train_loocv_full_model_without_larvaloutbreak", sep="_"), ".rds"))
+          mod <- readRDS(paste0("/home/master/abcflux_modeling/results/", paste(i,  km, m, "train_loocv", sep="_"), ".rds"))
           mod2 = mod$finalModel #pull out the quantile regression object
           
           print("prediction started")
@@ -819,7 +818,7 @@ for (c in 1:nrow(crops)) {
             
             # add cell coordinates and write out
             pred_matrix  <- data.matrix(data.frame(cbind(pred_rast[,1:2], sub_pred)))
-            write.csv(pred_matrix, file.path(out_path, paste(i,  km, m, time[t], "train_loocv_full_model_without_larvaloutbreak.csv", sep="_")), row.names=FALSE) 
+            write.csv(pred_matrix, file.path(out_path, paste(i,  km, m, time[t], "train_loocv.csv", sep="_")), row.names=FALSE) 
             
             # TEMPORARY
             # # Google cloud settings -recapping these here because of some errors (Error in googleAuthR::gar_cache_setup(invalid_func = function(req) { : 
@@ -838,8 +837,8 @@ for (c in 1:nrow(crops)) {
             rm(pred_matrix); gc()
             #TEMPORARY
             
-            filename_in=file.path(out_path, paste(i,  km, m, time[t], "train_loocv_full_model_without_larvaloutbreak.csv", sep="_"))
-            filename_out=paste0("gs://abcflux_modeling_files/predictions_8km/csv/", paste0(quantiles[[q]], "/"), paste(i,  km, m, time[t], "train_loocv_full_model_without_larvaloutbreak.csv", sep="_"))
+            filename_in=file.path(out_path, paste(i,  km, m, time[t], "train_loocv.csv", sep="_"))
+            filename_out=paste0("gs://abcflux_modeling_files/predictions_8km/csv/", paste0(quantiles[[q]], "/"), paste(i,  km, m, time[t], "train_loocv.csv", sep="_"))
             system(paste("gsutil cp", filename_in, filename_out, sep=" ")) # unix commands. use gsutils
             file.remove(filename_in)
             

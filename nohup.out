@@ -12,3 +12,7 @@ Error: package or namespace load failed for ‘ggplot2’:
 Error: package ‘ggplot2’ could not be loaded
 Execution halted
 Fatal error: cannot open file 'abcflux_modeling/src/calculate_predicted_flux_trends.R': No such file or directory
+Fatal error: cannot open file 'abcflux_modeling/src/final_qrf_caret_runs_LOOCV.R': No such file or directory
+Fatal error: cannot open file 'abcflux_modeling/src/final_qrf_caret_runs_LOOCV.R': No such file or directory
+Fatal error: cannot open file 'abcflux_modeling/src/final_qrf_caret_runs_LOOCV.R': No such file or directory
+Fatal error: cannot open file 'abcflux_modeling/src/final_qrf_caret_runs_LOOCV.R': No such file or directory

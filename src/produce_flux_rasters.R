@@ -18,7 +18,7 @@ gcs_upload_set_limit(50000000L) # increasing data size limit for transferring da
 ### 8 km predictions ###
 
 
-
+################ ADD FILENAMES TO THIS SCRIPT!!!
 
 ### calculate average rasters ###
 
@@ -486,11 +486,11 @@ avg_rasters <- function(flux, pattern1, filename) {
   
 }
 
-years <- seq(2000, 2016, by=1)
+years <- seq(2000, 2011, by=1) # TEMPORARY
 
 for (y in years) {
   
-  avg_rasters(flux="NEE_gC_m2", pattern1=seq(y, y, by=1)%>% as.character(), filname="full_model_without_larvaloutbreak")
+  avg_rasters(flux="NEE_gC_m2", pattern1=seq(y, y, by=1)%>% as.character(), filename="full_model_without_srad")
   
 }
 
@@ -506,6 +506,14 @@ for (y in years) {
   
 }
 
+
+# average annual gpp and reco, and the budget from them
+files <- list.files("/home/master/predictions_8km/raster/0.5/", pattern="NEE")
+files <- files[nchar(files)==22]
+setwd("/home/master/predictions_8km/raster/0.5/")
+reco <- rast(files)
+reco <- mean(reco)/1000
+writeRaster(reco, "/home/master/predictions_8km_mean/NEE_gC_m2_2000_2016_sum_mean.tif", overwrite=TRUE)
 
 
 

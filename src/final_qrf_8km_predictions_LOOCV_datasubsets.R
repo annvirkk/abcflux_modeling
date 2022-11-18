@@ -21,20 +21,20 @@ library(googleCloudStorageR, lib.loc="R/x86_64-pc-linux-gnu-library/4.2")
 library(purrr, lib.loc="R/x86_64-pc-linux-gnu-library/4.2")
 library("quantregForest", lib.loc="R/x86_64-pc-linux-gnu-library/4.2")
 
-# 
-# # Use these for running in Rstudio
-# library("sp")
-# library("ggplot2")
-# library("caret")
-# library("dplyr")
-# library("purrr")
-# library("raster")
-# library("terra")
-# #install.packages('terra', repos='https://rspatial.r-universe.dev', lib="/mnt/data1/boreal/avirkkala/packages")
-# library(stringr)
-# library(googleCloudStorageR)
-# library(purrr)
-# library("quantregForest")
+
+# Use these for running in Rstudio
+library("sp")
+library("ggplot2")
+library("caret")
+library("dplyr")
+library("purrr")
+library("raster")
+library("terra")
+#install.packages('terra', repos='https://rspatial.r-universe.dev', lib="/mnt/data1/boreal/avirkkala/packages")
+library(stringr)
+library(googleCloudStorageR)
+library(purrr)
+library("quantregForest")
 
 
 
@@ -102,7 +102,7 @@ Baseline_vars_20km %in% colnames(d)
 
 
 ### Response variables
-resp_vars <- c("NEE_gC_m2", "GPP_gC_m2", "Reco_gC_m2") 
+resp_vars <- c("GPP_gC_m2", "Reco_gC_m2", "NEE_gC_m2") 
 
 ### Models
 models <- c( "qrf") 
@@ -112,11 +112,16 @@ kms <- c("20km")
 
 
 ### Model versions
-versions <- c("full_model_without_vegtype", "nofactors_model_with_econly", 
-              "nofactors_model_with_reichsteinonly", "nofactors_model_without_daytimechambermeas", "nofactors_model_datafromallfluxes",
-              "nofactors_model_without_disturbedsites", "nofactors_model_without_larvaloutbreak", 
-              "nofactors_model_without_disturbedsites_plusharvest", "nofactors_model_without_disturbedsites_plusthermokarst",
-              "nofactors_model_without_disturbedsites_plusfire")
+
+versions <- c("full_model_without_vegtype", "full_model_without_srad") # ,
+"full_model_predictor_subset"
+
+#
+# versions <- c("full_model_without_vegtype", "nofactors_model_with_econly", 
+#               "nofactors_model_with_reichsteinonly", "nofactors_model_without_daytimechambermeas", "nofactors_model_datafromallfluxes",
+#               "nofactors_model_without_disturbedsites", "nofactors_model_without_larvaloutbreak", 
+#               "nofactors_model_without_disturbedsites_plusharvest", "nofactors_model_without_disturbedsites_plusthermokarst",
+#               "nofactors_model_without_disturbedsites_plusfire")
 
 
 ### Time periods for the monthly predictions

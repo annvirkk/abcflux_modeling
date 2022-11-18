@@ -8,6 +8,7 @@
 # install.packages("vip", lib="/mnt/data1/boreal/avirkkala/packages")
 # install.packages("pdp", lib="/mnt/data1/boreal/avirkkala/packages")
 #install.packages("Metrics", lib="/mnt/data1/boreal/avirkkala/packages")
+.libPaths("/home/master/R/x86_64-pc-linux-gnu-library/4.2")
 
 library("caret")
 library("vip")
@@ -20,8 +21,7 @@ library("dplyr")
 library("ggridges")
 
 ### Data
-setwd("D:/repos/flux_upscaling_data/src/")
-d <- read.csv("../results/final/modeldata_avg.csv")
+d <- read.csv("/home/master/flux_upscaling_data/results/final/modeldata_avg.csv") 
 
 
 # SOME EDITS THAT WERE MADE
@@ -121,7 +121,8 @@ Baseline_vars_20km <- c("srad_terraclimate_sites", "vpd_terraclimate_sites", "pr
 # check that the columns exist
 Baseline_vars_20km %in% colnames(d)
 
-
+d$Study_ID_Short[d$Study_ID_Short=="L\xf3pez-Blanco_GL-NuF_tower1"] <- "Lopez-Blanco_GL-NuF_tower1"
+d$Study_ID_Short[d$Study_ID_Short=="L\xf3pez-Blanco_GL-ZaF_tower1"] <- "Lopez-Blanco_GL-Zaf_tower1"
 
 # variables as factors
 d$TKWP_Thermokarst <- as.factor(d$TKWP_Thermokarst)
@@ -149,7 +150,7 @@ kms <- c("1km", "20km")
 
 
 ### Set folder for results
-setwd("D:/repos/abcflux_modeling/results/figures")
+setwd("/home/master/abcflux_modeling/results/figures")
 
 
 
@@ -220,7 +221,7 @@ for (i in resp_vars) {
 
       
       # Load model files
-      mod <- readRDS(paste0("D:/repos/abcflux_modeling/results/", paste(i,  km, m, "train_loocv", sep="_"), ".rds")) 
+      mod <- readRDS(paste0("/home/master/abcflux_modeling/results/", paste(i,  km, m, "train_loocv", sep="_"), ".rds")) 
       mod # model says CV used by it is based on leave-one-site out folds that I created
       
 
@@ -272,6 +273,7 @@ for (i in resp_vars) {
       preds <- mod$pred %>%
         data.frame()
       
+      
      
       
       # Merge
@@ -285,7 +287,8 @@ for (i in resp_vars) {
       } else {
         
         obspred <- merge(modeldata22, preds, by.x="samplerow", by.y="rowIndex")
-        #plot(obspred$NEE_gC_m2, obspred$obs)
+        plot(obspred$NEE_gC_m2, obspred$obs) # yes, identical
+        cor.test(obspred$NEE_gC_m2, obspred$obs)
         
         
       }
@@ -331,9 +334,10 @@ for (i in resp_vars) {
         xlim(scale_min, scale_max) + ylim(scale_min, scale_max)
       
       # Print out
-      setwd("D:/repos/abcflux_modeling/results/figures/")
+      setwd("/home/master/abcflux_modeling/results/figures/")
       print(p1)
       dev.copy(png, paste(i, m, km,"train_loocv_predperf_biome.png", sep="_"), width=500, height=400)
+    
       dev.off()
       
       
@@ -555,6 +559,7 @@ for (i in resp_vars) {
       
       
       ### Model fit 
+      library("randomForest")
       predtest <- predict(mod, obspred)
       obspred$predtest <- predtest
       p11 <- ggplot(obspred) + geom_bin2d(aes(x=predtest, y=obs), bins=30) + geom_abline(slope = 1) + 
@@ -633,7 +638,7 @@ for (i in resp_vars) {
       #   xlim(scale_min, scale_max) + ylim(scale_min, scale_max)
       # 
       # # Print out
-      # setwd("D:/repos/abcflux_modeling/results/figures/")
+      # setwd("/home/master/abcflux_modeling/results/figures/")
       # ggsave(paste(i, m, km,"train_loocv_predperf_biome.eps", sep="_"), device=cairo_ps, p1, width=16, height=11, units=c("cm"))
       # 
       # 
@@ -652,7 +657,7 @@ for (i in resp_vars) {
       #   xlim(scale_min, scale_max) + ylim(scale_min, scale_max)
       # 
       # # Print out
-      # setwd("D:/repos/abcflux_modeling/results/figures/")
+      # setwd("/home/master/abcflux_modeling/results/figures/")
       # ggsave(paste(i, m, km,"train_loocv_predperf_disturbance.eps", sep="_"), device=cairo_ps, p1, width=17, height=11, units=c("cm"))
       # 
       # 
@@ -671,7 +676,7 @@ for (i in resp_vars) {
       #   xlim(scale_min, scale_max) + ylim(scale_min, scale_max)
       # 
       # # Print out
-      # setwd("D:/repos/abcflux_modeling/results/figures/")
+      # setwd("/home/master/abcflux_modeling/results/figures/")
       # ggsave(paste(i, m, km,"train_loocv_predperf_months.eps", sep="_"), device=cairo_ps, p1, width=15, height=11, units=c("cm"))
 
       
@@ -726,6 +731,9 @@ for (i in resp_vars) {
     # change the name
     all_varImp$Variable2 <- ifelse(all_varImp$Variable2=="srad_terraclimate_sites", "Solar radiation", all_varImp$Variable2)
     all_varImp$Variable2 <- ifelse(all_varImp$Variable2=="vpd_terraclimate_sites", "Vapor pressure deficit", all_varImp$Variable2)
+    
+    all_varImp$Variable2 <- ifelse(all_varImp$Variable2=="tmean_terraclimate_sites", "Monthly air temperature", all_varImp$Variable2)
+    
     all_varImp$Variable2 <- ifelse(all_varImp$Variable2=="pr_terraclimate_sites", "Precipitation", all_varImp$Variable2)
     all_varImp$Variable2 <- ifelse(all_varImp$Variable2=="pdsi_terraclimate_sites", "PDSI", all_varImp$Variable2)
     all_varImp$Variable2 <- ifelse(all_varImp$Variable2=="tmean_TerraClimate_averages", "Mean annual air temperature over 1961-1990", all_varImp$Variable2)
@@ -774,21 +782,21 @@ for (i in resp_vars) {
              theme_pub #+ ggtitle(title2)
     
     # Print out
-    setwd("D:/repos/abcflux_modeling/results/figures/")
+    setwd("/home/master/abcflux_modeling/results/figures/")
     print(p1)
+    
     dev.copy(png, paste( i, km,  "qrf_vip.png", sep="_"), width=1300, height=1100)
     dev.off()
-    
     
     
     # EPS
     
     # Print out
-    setwd("D:/repos/abcflux_modeling/results/figures/")
+    setwd("/home/master/abcflux_modeling/results/figures/")
     ggsave(paste( i, km,  "qrf_vip.eps", sep="_"), device=cairo_ps, p1, width=35, height=23, units=c("cm"))
     
     
-    write.csv(all_varImp, paste("D:/repos/abcflux_modeling/results/", i, km, "qrf_vip.csv", sep="_"), row.names=FALSE)
+    write.csv(all_varImp, paste("/home/master/abcflux_modeling/results/", i, km, "qrf_vip.csv", sep="_"), row.names=FALSE)
     
     
   } # km loop done
@@ -819,7 +827,7 @@ for (i in resp_vars) {
 
 
     # models
-    mod <- readRDS(paste0("D:/repos/abcflux_modeling/results/", paste(i,  km, "qrf_train_loocv", sep="_"), ".rds"))
+    mod <- readRDS(paste0("/home/master/abcflux_modeling/results/", paste(i,  km, "qrf_train_loocv", sep="_"), ".rds"))
 
     # selected vars
     if (km=="1km") {
@@ -887,10 +895,10 @@ for (i in resp_vars) {
       Selected_vars2 <- ifelse(Selected_vars2=="vpd_terraclimate_sites", "Vapor pressure deficit/100 kPa", Selected_vars2)
       Selected_vars2 <- ifelse(Selected_vars2=="pr_terraclimate_sites", "Precipitation mm", Selected_vars2)
       Selected_vars2 <- ifelse(Selected_vars2=="pdsi_terraclimate_sites", "PDSI/100", Selected_vars2)
-      Selected_vars2 <- ifelse(Selected_vars2=="tmean_TerraClimate_averages", "Mean annual air temperature over 1961-1990 °C", Selected_vars2)
+      Selected_vars2 <- ifelse(Selected_vars2=="tmean_TerraClimate_averages", "Mean annual air temperature over 1961-1990 ?C", Selected_vars2)
       Selected_vars2 <- ifelse(Selected_vars2=="ppt_TerraClimate_averages", "Mean annual precipitation over 1961-1990 mm", Selected_vars2)
-      Selected_vars2 <- ifelse(Selected_vars2=="trend_20yrprior_terra_change_id", "Rolling last 20-year air temperature trend/10 °C", Selected_vars2)
-      Selected_vars2 <- ifelse(Selected_vars2=="terra_trend_19601990", "Annual mean air temperature trend over 1961-1990/10 °C", Selected_vars2)
+      Selected_vars2 <- ifelse(Selected_vars2=="trend_20yrprior_terra_change_id", "Rolling last 20-year air temperature trend/10 ?C", Selected_vars2)
+      Selected_vars2 <- ifelse(Selected_vars2=="terra_trend_19601990", "Annual mean air temperature trend over 1961-1990/10 ?C", Selected_vars2)
       Selected_vars2 <- ifelse(Selected_vars2=="ndvi_trend_19812010", "June-August mean NDVI trend over 1982-2010", Selected_vars2)
       Selected_vars2 <- ifelse(Selected_vars2=="Barrow_CO2_conc_Barrow_CO2conc", "Atmospheric CO2", Selected_vars2)
       Selected_vars2 <- ifelse(Selected_vars2=="Snow.cover_era5_soilmoist_temp_snow", "Snow cover %", Selected_vars2)
@@ -938,9 +946,9 @@ for (i in resp_vars) {
           theme(legend.position = "none") # + ggtitle(title)
       }
       
-      print(pdp_plot1)
       
       dev.copy(png, paste( i, km, Selected_vars[nvar],  "qrf_pdp.png", sep="_"), width=600, height=400)
+      print(pdp_plot1)
       dev.off()
 
 

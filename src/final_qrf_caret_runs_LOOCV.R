@@ -1,4 +1,5 @@
 
+.libPaths("/home/master/R/x86_64-pc-linux-gnu-library/4.2")
 
 
 library("dplyr")
@@ -12,8 +13,7 @@ library("groupdata2")
 
 
 ### Load modeling data
-setwd("D:/repos/flux_upscaling_data/src/")
-d <- read.csv("../results/final/modeldata_avg.csv")
+d <- read.csv("/home/master/flux_upscaling_data/results/final/modeldata_avg.csv")
 
 
 
@@ -28,46 +28,46 @@ resp_vars <- c("GPP_gC_m2", "Reco_gC_m2", "NEE_gC_m2")
 
 
 ### Predictors
-names(d)
+
 
 ## List predictors for the models
 # Variables used in 1 km spatial resolution models
 Baseline_vars_1km <- c("srad_terraclimate_sites", "vpd_terraclimate_sites", "pr_terraclimate_sites", "pdsi_terraclimate_sites", # met
-                       
+
                        "tmean_TerraClimate_averages", "ppt_TerraClimate_averages", # climate
-                       
+
                        "trend_20yrprior_terra_change_id",  "terra_trend_19601990", # temperature change - note that the naming convention changed a bit...
-                       
-                       "ndvi_trend_19812010", # ndvi change trend 
-                       
+
+                       "ndvi_trend_19812010", # ndvi change trend
+
                        "Barrow_CO2_conc_Barrow_CO2conc", # atmos CO2 conc
-                       
+
                        "Snow.cover_era5_soilmoist_temp_snow", "Snow.depth_era5_soilmoist_temp_snow", "Soil.temperature.level.1_era5_soilmoist_temp_snow", "Volumetric.soil.water.layer.1_era5_soilmoist_temp_snow", #era5 here
-                       
+
                        "NDVI_whittaker_constant_monthly_mean", # Optical RS, dropped several because highly correlated
-                       
+
                        "LST_Day_1km_MOD11A2v006_LST_Day_sites_low_quality", # surface temp
-                       
+
                        "water_ground_MCD43A4_annual_water_ground_sites_low_quality", "water_vegetation_MCD43A4_annual_water_vegetation_sites_low_quality", # wetness
-                       
+
                        "dtm_cti_merit.dem_m_250m_s0..0cm_2018_v1.0_MERIT_topo_indices_250m", "dtm_rough.scale_merit.dem_m_250m_s0..0cm_2018_v1.0_MERIT_topo_indices_250m", # topo
-                       
+
                        "aboveground_biomass_carbon_2010_Above_belowground_biomass", "belowground_biomass_carbon_2010_Above_belowground_biomass", # c stocks
-                       
+
                        "Percent_NonTree_Vegetation_MOD44B_sites", "Percent_NonVegetated_MOD44B_sites", "Percent_Tree_Cover_MOD44B_sites", # veg cover
-                       
+
                        "ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged", # veg type
-                       
-                       "PHIHOX_M_sl1_250m_ll_SoilGrids", "BLDFIE_M_sl1_250m_ll_SoilGrids", "SoilGrids_SOC_SoilGrids_SOCstock", 
+
+                       "PHIHOX_M_sl1_250m_ll_SoilGrids", "BLDFIE_M_sl1_250m_ll_SoilGrids", "SoilGrids_SOC_SoilGrids_SOCstock",
                        "sol_watercontent.1500kPa_usda.3c2a1a_m_250m_b0..0cm_1950..2017_v0.1_SoilGrids_watercontent", # soil variables
-                       
+
                        "UiO_PEX_PERPROB_5.0_20181128_2000_2016_NH_UiO_PEX_20181128_2000_2016_NH", # Permafrost (static)
-                       
-                       "TKWP_Thermokarst", "TKHP_Thermokarst", # themokarst vulnerability 
-                       
+
+                       "TKWP_Thermokarst", "TKHP_Thermokarst", # themokarst vulnerability
+
                        "forest_age_class_forest_age_sites" # forest age
-                       
-                       
+
+
 )
 
 # check that the columns exist
@@ -79,34 +79,34 @@ Baseline_vars_1km
 
 # Variables used in 20 km spatial resolution models
 Baseline_vars_20km <- c("srad_terraclimate_sites", "vpd_terraclimate_sites", "pr_terraclimate_sites", "pdsi_terraclimate_sites", "tmean_terraclimate_sites",  # tmean included because don't have LST
-                        
-                        "tmean_TerraClimate_averages", "ppt_TerraClimate_averages", 
-                        
-                        "trend_20yrprior_terra_change_id",  "terra_trend_19601990", 
-                        
+
+                        "tmean_TerraClimate_averages", "ppt_TerraClimate_averages",
+
+                        "trend_20yrprior_terra_change_id",  "terra_trend_19601990",
+
                         "ndvi_trend_19812010", # note cannot have ndvi prior to 10 yrs because no data from 1979
-                        
+
                         "Barrow_CO2_conc_Barrow_CO2conc",
-                        
-                        "Snow.cover_era5_soilmoist_temp_snow", "Snow.depth_era5_soilmoist_temp_snow", "Soil.temperature.level.1_era5_soilmoist_temp_snow", "Volumetric.soil.water.layer.1_era5_soilmoist_temp_snow", 
-                        
-                        "ndvi3g_lowest_gapfilled_mean_GIMMS3g_NDVI_sites_low_quality_gapfilled",  
-                        
-                        "dtm_cti_merit.dem_m_250m_s0..0cm_2018_v1.0_MERIT_topo_indices_250m", "dtm_rough.scale_merit.dem_m_250m_s0..0cm_2018_v1.0_MERIT_topo_indices_250m", 
-                        
+
+                        "Snow.cover_era5_soilmoist_temp_snow", "Snow.depth_era5_soilmoist_temp_snow", "Soil.temperature.level.1_era5_soilmoist_temp_snow", "Volumetric.soil.water.layer.1_era5_soilmoist_temp_snow",
+
+                        "ndvi3g_lowest_gapfilled_mean_GIMMS3g_NDVI_sites_low_quality_gapfilled",
+
+                        "dtm_cti_merit.dem_m_250m_s0..0cm_2018_v1.0_MERIT_topo_indices_250m", "dtm_rough.scale_merit.dem_m_250m_s0..0cm_2018_v1.0_MERIT_topo_indices_250m",
+
                         "aboveground_biomass_carbon_2010_Above_belowground_biomass", "belowground_biomass_carbon_2010_Above_belowground_biomass",
-                        
+
                         "Percent_NonTree_Vegetation_AVHRR_VCF5KYR", "Percent_TreeCover_AVHRR_VCF5KYR", "Percent_NonVegetated_AVHRR_VCF5KYR", # equivalent to MOD tree cover product
-                        
-                        "ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged", 
-                        
-                        "PHIHOX_M_sl1_250m_ll_SoilGrids", "BLDFIE_M_sl1_250m_ll_SoilGrids", "SoilGrids_SOC_SoilGrids_SOCstock", 
-                        "sol_watercontent.1500kPa_usda.3c2a1a_m_250m_b0..0cm_1950..2017_v0.1_SoilGrids_watercontent",  
-                        
-                        "UiO_PEX_PERPROB_5.0_20181128_2000_2016_NH_UiO_PEX_20181128_2000_2016_NH", 
-                        
-                        "TKWP_Thermokarst", "TKHP_Thermokarst", 
-                        
+
+                        "ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged",
+
+                        "PHIHOX_M_sl1_250m_ll_SoilGrids", "BLDFIE_M_sl1_250m_ll_SoilGrids", "SoilGrids_SOC_SoilGrids_SOCstock",
+                        "sol_watercontent.1500kPa_usda.3c2a1a_m_250m_b0..0cm_1950..2017_v0.1_SoilGrids_watercontent",
+
+                        "UiO_PEX_PERPROB_5.0_20181128_2000_2016_NH_UiO_PEX_20181128_2000_2016_NH",
+
+                        "TKWP_Thermokarst", "TKHP_Thermokarst",
+
                         "forest_age_class_forest_age_sites"
 )
 
@@ -120,133 +120,133 @@ Baseline_vars_20km %in% colnames(d)
 
 
 
-### Factor checks
-### number of sites and obs in the different levels of the categorical variables
-
-## 1 km models
-# NEE
-modeldata1 <- d[,c("Study_ID_Short", "id", "NEE_gC_m2", Baseline_vars_1km)]
-modeldata1 <- na.omit(modeldata1) 
-unique(modeldata1$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged)
-unique(d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged)
-modeldata1 %>% group_by(ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
-
-
-unique(modeldata1$TKWP_Thermokarst)
-modeldata1 %>% group_by(TKWP_Thermokarst) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
-
-unique(modeldata1$TKHP_Thermokarst)
-modeldata1 %>% group_by(TKHP_Thermokarst) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
-
-unique(modeldata1$forest_age_class_forest_age_sites)
-modeldata1 %>% group_by(forest_age_class_forest_age_sites) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
-
-
-# GPP
-modeldata1 <- d[,c("Study_ID_Short", "id", "GPP_gC_m2", Baseline_vars_1km)]
-modeldata1 <- na.omit(modeldata1) 
-unique(modeldata1$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged)
-unique(d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged) 
-modeldata1 %>% group_by(ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
-# barren group missing!!
-
-unique(modeldata1$TKWP_Thermokarst)
-modeldata1 %>% group_by(TKWP_Thermokarst) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
-
-unique(modeldata1$TKHP_Thermokarst)
-modeldata1 %>% group_by(TKHP_Thermokarst) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
-
-unique(modeldata1$forest_age_class_forest_age_sites)
-modeldata1 %>% group_by(forest_age_class_forest_age_sites) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
-
-
-
-
-
-
-# Reco
-modeldata1 <- d[,c("Study_ID_Short", "id", "Reco_gC_m2", Baseline_vars_1km)]
-modeldata1 <- na.omit(modeldata1) 
-unique(modeldata1$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged) 
-unique(d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged) 
-modeldata1 %>% group_by(ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
-# barren group missing!!
-
-unique(modeldata1$TKWP_Thermokarst)
-modeldata1 %>% group_by(TKWP_Thermokarst) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
-
-unique(modeldata1$TKHP_Thermokarst)
-modeldata1 %>% group_by(TKHP_Thermokarst) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
-
-unique(modeldata1$forest_age_class_forest_age_sites)
-modeldata1 %>% group_by(forest_age_class_forest_age_sites) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
-
-
-
-
-
-
-
-## 20 km models
-# NEE
-modeldata1 <- d[,c("Study_ID_Short", "id", "NEE_gC_m2", Baseline_vars_20km)]
-modeldata1 <- na.omit(modeldata1) 
-unique(modeldata1$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged)
-unique(d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged)
-modeldata1 %>% group_by(ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
-
-unique(modeldata1$TKWP_Thermokarst)
-modeldata1 %>% group_by(TKWP_Thermokarst) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
-# only one site in class 3
-
-unique(modeldata1$TKHP_Thermokarst)
-modeldata1 %>% group_by(TKHP_Thermokarst) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
-
-unique(modeldata1$forest_age_class_forest_age_sites)
-modeldata1 %>% group_by(forest_age_class_forest_age_sites) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
-
-
-# GPP
-modeldata1 <- d[,c("Study_ID_Short", "id", "GPP_gC_m2", Baseline_vars_20km)]
-modeldata1 <- na.omit(modeldata1) 
-unique(modeldata1$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged)
-unique(d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged) 
-modeldata1 %>% group_by(ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
-# barren group missing!!
-
-unique(modeldata1$TKWP_Thermokarst)
-modeldata1 %>% group_by(TKWP_Thermokarst) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
-# nothing from group 3
-
-unique(modeldata1$TKHP_Thermokarst)
-modeldata1 %>% group_by(TKHP_Thermokarst) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
-
-unique(modeldata1$forest_age_class_forest_age_sites)
-modeldata1 %>% group_by(forest_age_class_forest_age_sites) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
-
-
-
-
-
-
-# Reco
-modeldata1 <- d[,c("Study_ID_Short", "id", "Reco_gC_m2", Baseline_vars_20km)]
-modeldata1 <- na.omit(modeldata1) 
-unique(modeldata1$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged) 
-unique(d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged) 
-modeldata1 %>% group_by(ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
-# barren group missing!!
-
-unique(modeldata1$TKWP_Thermokarst)
-modeldata1 %>% group_by(TKWP_Thermokarst) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
-
-unique(modeldata1$TKHP_Thermokarst)
-modeldata1 %>% group_by(TKHP_Thermokarst) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
-
-unique(modeldata1$forest_age_class_forest_age_sites)
-modeldata1 %>% group_by(forest_age_class_forest_age_sites) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
-
-
+# ### Factor checks
+# ### number of sites and obs in the different levels of the categorical variables
+# 
+# ## 1 km models
+# # NEE
+# modeldata1 <- d[,c("Study_ID_Short", "id", "NEE_gC_m2", Baseline_vars_1km)]
+# modeldata1 <- na.omit(modeldata1) 
+# unique(modeldata1$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged)
+# unique(d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged)
+# modeldata1 %>% group_by(ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
+# 
+# 
+# unique(modeldata1$TKWP_Thermokarst)
+# modeldata1 %>% group_by(TKWP_Thermokarst) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
+# 
+# unique(modeldata1$TKHP_Thermokarst)
+# modeldata1 %>% group_by(TKHP_Thermokarst) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
+# 
+# unique(modeldata1$forest_age_class_forest_age_sites)
+# modeldata1 %>% group_by(forest_age_class_forest_age_sites) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
+# 
+# 
+# # GPP
+# modeldata1 <- d[,c("Study_ID_Short", "id", "GPP_gC_m2", Baseline_vars_1km)]
+# modeldata1 <- na.omit(modeldata1) 
+# unique(modeldata1$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged)
+# unique(d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged) 
+# modeldata1 %>% group_by(ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
+# # barren group missing!!
+# 
+# unique(modeldata1$TKWP_Thermokarst)
+# modeldata1 %>% group_by(TKWP_Thermokarst) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
+# 
+# unique(modeldata1$TKHP_Thermokarst)
+# modeldata1 %>% group_by(TKHP_Thermokarst) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
+# 
+# unique(modeldata1$forest_age_class_forest_age_sites)
+# modeldata1 %>% group_by(forest_age_class_forest_age_sites) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
+# 
+# 
+# 
+# 
+# 
+# 
+# # Reco
+# modeldata1 <- d[,c("Study_ID_Short", "id", "Reco_gC_m2", Baseline_vars_1km)]
+# modeldata1 <- na.omit(modeldata1) 
+# unique(modeldata1$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged) 
+# unique(d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged) 
+# modeldata1 %>% group_by(ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
+# # barren group missing!!
+# 
+# unique(modeldata1$TKWP_Thermokarst)
+# modeldata1 %>% group_by(TKWP_Thermokarst) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
+# 
+# unique(modeldata1$TKHP_Thermokarst)
+# modeldata1 %>% group_by(TKHP_Thermokarst) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
+# 
+# unique(modeldata1$forest_age_class_forest_age_sites)
+# modeldata1 %>% group_by(forest_age_class_forest_age_sites) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# ## 20 km models
+# # NEE
+# modeldata1 <- d[,c("Study_ID_Short", "id", "NEE_gC_m2", Baseline_vars_20km)]
+# modeldata1 <- na.omit(modeldata1) 
+# unique(modeldata1$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged)
+# unique(d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged)
+# modeldata1 %>% group_by(ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
+# 
+# unique(modeldata1$TKWP_Thermokarst)
+# modeldata1 %>% group_by(TKWP_Thermokarst) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
+# # only one site in class 3
+# 
+# unique(modeldata1$TKHP_Thermokarst)
+# modeldata1 %>% group_by(TKHP_Thermokarst) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
+# 
+# unique(modeldata1$forest_age_class_forest_age_sites)
+# modeldata1 %>% group_by(forest_age_class_forest_age_sites) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
+# 
+# 
+# # GPP
+# modeldata1 <- d[,c("Study_ID_Short", "id", "GPP_gC_m2", Baseline_vars_20km)]
+# modeldata1 <- na.omit(modeldata1) 
+# unique(modeldata1$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged)
+# unique(d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged) 
+# modeldata1 %>% group_by(ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
+# # barren group missing!!
+# 
+# unique(modeldata1$TKWP_Thermokarst)
+# modeldata1 %>% group_by(TKWP_Thermokarst) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
+# # nothing from group 3
+# 
+# unique(modeldata1$TKHP_Thermokarst)
+# modeldata1 %>% group_by(TKHP_Thermokarst) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
+# 
+# unique(modeldata1$forest_age_class_forest_age_sites)
+# modeldata1 %>% group_by(forest_age_class_forest_age_sites) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
+# 
+# 
+# 
+# 
+# 
+# 
+# # Reco
+# modeldata1 <- d[,c("Study_ID_Short", "id", "Reco_gC_m2", Baseline_vars_20km)]
+# modeldata1 <- na.omit(modeldata1) 
+# unique(modeldata1$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged) 
+# unique(d$ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged) 
+# modeldata1 %>% group_by(ESACCI_cavm_general_ESAwaterfix_broadevfix_mixfix_cropfix_nowaterglacier_ESACCI_CAVM_merged) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
+# # barren group missing!!
+# 
+# unique(modeldata1$TKWP_Thermokarst)
+# modeldata1 %>% group_by(TKWP_Thermokarst) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
+# 
+# unique(modeldata1$TKHP_Thermokarst)
+# modeldata1 %>% group_by(TKHP_Thermokarst) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
+# 
+# unique(modeldata1$forest_age_class_forest_age_sites)
+# modeldata1 %>% group_by(forest_age_class_forest_age_sites) %>% dplyr::summarize(n=n(), nsite=length(unique(Study_ID_Short)))
+# 
+# 
 
 
 
@@ -480,7 +480,7 @@ for (flux in resp_vars) {
   print("1 km caret::train and tuning done")
   
   ### Write the model out
-  saveRDS(rfe_fit, paste0("D:/repos/abcflux_modeling/results/", paste(flux, "1km_qrf_train_loocv",  sep="_"), ".rds"))
+  saveRDS(rfe_fit, paste0("/home/master/abcflux_modeling/results/", paste(flux, "1km_qrf_train_loocv",  sep="_"), ".rds"))
   
   
   
@@ -494,7 +494,7 @@ for (flux in resp_vars) {
   print("20 km caret::train and tuning done")
   
   ### Write the model out
-  saveRDS(rfe_fit2, paste0("D:/repos/abcflux_modeling/results/", paste(flux, "20km_qrf_train_loocv", sep="_"), ".rds"))
+  saveRDS(rfe_fit2, paste0("/home/master/abcflux_modeling/results/", paste(flux, "20km_qrf_train_loocv", sep="_"), ".rds"))
   
   
   print("moving on to next variable")
