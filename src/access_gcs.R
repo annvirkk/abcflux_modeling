@@ -118,9 +118,9 @@ gcs_list_buckets(my_project_id)
 gcs_global_bucket("abcflux_modeling_files")
 contents <- gcs_list_objects()
 gcs_upload_set_limit(50000000L) # increasing data size limit for transferring data to google cloud
-setwd("/home/master/local_outputs/")
-gcs_upload(file="trends_drivers_8km", 
-           name = )
+setwd("/home/master/")
+# gcs_upload(file="predictors_8km_mean", 
+#            name = )
 
-files <- list.files("trends_drivers_8km", full.names=TRUE) 
+files <- list.files("predictors_8km_mean", full.names=TRUE) 
 map(files, function(x) gcs_upload(x, name = x))

@@ -42,10 +42,11 @@ avg_function <- function(var, month_format, divider) {
   files_to_read <- list.files("/home/master/predictors_8km", pattern=var, full.names=TRUE)
   
   for (m in months) {
+    #m <- 2
     print(m)
     files_subset <- files_to_read[(grepl(paste0("_", m, ".tif"), files_to_read)) ]
     print(files_subset)
-    r <- rast(files_to_read)
+    r <- rast(files_subset)
     r <- mean(r)/divider
     
     writeRaster(r, paste0("/home/master/predictors_8km_mean/", var, "_",  "mean_2002_2016", "_", m,  ".tif"), overwrite=TRUE)
@@ -58,9 +59,11 @@ avg_function <- function(var, month_format, divider) {
   
 }
 
+# var <- "Percent_TreeCover_VCF5KYR"
 # var <- "srad"
+
 # month_format <- "short"
-# divider=10
+# divider=1
 
 
 # time alt short
@@ -85,18 +88,29 @@ avg_function("tmean20yrprior_trend", "nonshort", 1000) # unclear
 
 avg_function("snowdepth", "nonshort", 100)
 
-avg_function("ppt", "short", 100)
-
-avg_function("pdsi", "short", 1)
-
-avg_function("Percent_TreeCover_VCF5KYR", "short", 1)
-
-avg_function("Percent_NonTree_Vegetation_VCF5KYR", "short", 1)
-
-avg_function("Percent_NonVegetated_VCF5KYR", "short", 1)
+# avg_function("ppt", "short", 100)
+# 
+# avg_function("pdsi", "short", 1)
+# 
+# avg_function("Percent_TreeCover_VCF5KYR", "short", 1)
+# 
+# avg_function("Percent_NonTree_Vegetation_VCF5KYR", "short", 1)
+# 
+# avg_function("Percent_NonVegetated_VCF5KYR", "short", 1)
 
 #r <- rast(list.files("/home/master/local_outputs/predictors_8km_mean/", pattern="tmean20yrprior", full.names=TRUE))
+my_project_id <- "top-operand-328213"
+gcs_list_buckets(my_project_id)
+gcs_global_bucket("abcflux_modeling_files")
+contents <- gcs_list_objects()
+gcs_upload_set_limit(50000000L) # increasing data size limit for transferring data to google cloud
+setwd("/home/master/")
+# gcs_upload(file="predictors_8km_mean", 
+#            name = )
 
+files <- list.files("predictors_8km_mean", full.names=TRUE) 
+map(files, function(x) gcs_upload(x, name = x))
+file.remove(files)
 
 
 file.remove(paste0("/home/master/cloud/predictors_8km/", "vpd_", time_alt[t], ".tif"))
@@ -178,7 +192,9 @@ annual_avg_function("Percent_NonTree_Vegetation_VCF5KYR",  1)
 
 annual_avg_function("Percent_NonVegetated_VCF5KYR",  1)
 
-
+files <- list.files("predictors_8km_mean", full.names=TRUE) 
+map(files, function(x) gcs_upload(x, name = x))
+file.remove(files)
 
 
 ### 1 km predictor averages

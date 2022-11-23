@@ -113,8 +113,9 @@ kms <- c("20km")
 
 ### Model versions
 
-versions <- c("full_model_without_vegtype", "full_model_without_srad") # ,
-"full_model_predictor_subset"
+versions <- c("full_model_simple")
+# versions <- c("full_model_without_vegtype", "full_model_without_srad") # ,
+# "full_model_predictor_subset"
 
 #
 # versions <- c("full_model_without_vegtype", "nofactors_model_with_econly", 
@@ -513,7 +514,7 @@ for (c in 1:nrow(crops)) {
       print("done")
       
       # continue with the rest of dynamic rasters...
-      gcs_get_object(paste0("predictors_8km/", "vpd_", time_alt[t], ".tif"), saveToDisk = paste0("predictors_8km/", "snowcover_", time_alt[t], ".tif"), overwrite=TRUE)
+      gcs_get_object(paste0("predictors_8km/", "snowcover_", time_alt[t], ".tif"), saveToDisk = paste0("predictors_8km/", "snowcover_", time_alt[t], ".tif"), overwrite=TRUE)
       Snow.cover_era5_soilmoist_temp_snow <- rast(paste0("/home/master/predictors_8km/","snowcover_", time_alt[t], ".tif"))
       #plot(Snow.cover_era5_soilmoist_temp_snow)
       Snow.cover_era5_soilmoist_temp_snow

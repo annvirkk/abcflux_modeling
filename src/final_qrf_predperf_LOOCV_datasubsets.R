@@ -60,8 +60,10 @@ models <- c("qrf")
 
 
 ### Versions
-versions <- c("full_model_without_vegtype", "full_model_without_srad") # ,
-"full_model_predictor_subset"
+versions <- c("full_model_simple")
+  
+  #c("full_model_without_vegtype", "full_model_without_srad") # ,
+#"full_model_predictor_subset"
 
 #
 # versions <- c("full_model_without_vegtype", "nofactors_model_with_econly", 
@@ -118,6 +120,7 @@ for (i in resp_vars) {
       
       for (v in versions) {
         # v <- "full_model_without_srad"
+        # v <- "full_model_simple"
         
         
         
@@ -285,6 +288,65 @@ for (i in resp_vars) {
         }
         
         
+        if (v=="full_model_simple") {
+          
+          
+          
+          
+          # Variables used in 1 km spatial resolution models
+          Baseline_vars_1km <- c("srad_terraclimate_sites", "vpd_terraclimate_sites", 
+                                 
+                                 "Barrow_CO2_conc_Barrow_CO2conc", # atmos CO2 conc
+                                 
+                                 "Snow.cover_era5_soilmoist_temp_snow", 
+                                 
+                                 "Soil.temperature.level.1_era5_soilmoist_temp_snow", "Volumetric.soil.water.layer.1_era5_soilmoist_temp_snow", #era5 here
+                                 
+                                 "NDVI_whittaker_constant_monthly_mean", # Optical RS, dropped several because highly correlated
+                                 
+                                 "LST_Day_1km_MOD11A2v006_LST_Day_sites_low_quality", # surface temp
+                                 
+                                 "dtm_cti_merit.dem_m_250m_s0..0cm_2018_v1.0_MERIT_topo_indices_250m", 
+                                 
+                                 "Percent_NonTree_Vegetation_MOD44B_sites", "Percent_Tree_Cover_MOD44B_sites", # veg cover
+                                 
+                                 "PHIHOX_M_sl1_250m_ll_SoilGrids",  "SoilGrids_SOC_SoilGrids_SOCstock", 
+                                 
+                                 "UiO_PEX_PERPROB_5.0_20181128_2000_2016_NH_UiO_PEX_20181128_2000_2016_NH"
+                                 
+                                 
+          )
+          
+          # check that the columns exist
+          Baseline_vars_1km %in% colnames(d)
+          Baseline_vars_1km
+          
+          
+          
+          
+          # Variables used in 20 km spatial resolution models
+          Baseline_vars_20km <- c("srad_terraclimate_sites", "vpd_terraclimate_sites",  "tmean_terraclimate_sites",  # tmean included because don't have LST
+                                  
+                                  "Barrow_CO2_conc_Barrow_CO2conc",
+                                  
+                                  "Snow.cover_era5_soilmoist_temp_snow", 
+                                  
+                                  "Soil.temperature.level.1_era5_soilmoist_temp_snow", "Volumetric.soil.water.layer.1_era5_soilmoist_temp_snow", 
+                                  
+                                  "ndvi3g_lowest_gapfilled_mean_GIMMS3g_NDVI_sites_low_quality_gapfilled",  
+                                  
+                                  "dtm_cti_merit.dem_m_250m_s0..0cm_2018_v1.0_MERIT_topo_indices_250m",
+                                  
+                                  "Percent_NonTree_Vegetation_AVHRR_VCF5KYR", "Percent_TreeCover_AVHRR_VCF5KYR", # equivalent to MOD tree cover product
+                                  
+                                  "PHIHOX_M_sl1_250m_ll_SoilGrids",  "SoilGrids_SOC_SoilGrids_SOCstock", 
+                                  
+                                  "UiO_PEX_PERPROB_5.0_20181128_2000_2016_NH_UiO_PEX_20181128_2000_2016_NH" 
+                                  
+                                  
+          )
+          
+        }
         
         
         

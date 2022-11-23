@@ -486,6 +486,40 @@ avg_rasters <- function(flux, pattern1, filename) {
   
 }
 
+
+
+
+
+### This is to explore the average datasubset runs
+filename <- "full_model_simple"
+flux <- "NEE_gC_m2"
+setwd("/home/master/")
+files_to_download <- grep("*.csv", contents$name, value = TRUE)
+files_to_download2 <- files_to_download[grepl(flux, files_to_download)]
+files_to_download2 <- files_to_download2[grepl("predictions_8km/csv/0.5/", files_to_download2)]
+files_to_download2 <- files_to_download2[grepl(filename, files_to_download2)]
+
+map(files_to_download2, function(x) gcs_get_object(x, saveToDisk = x, overwrite = TRUE))
+
+
+# read to a data frame
+setwd("/home/master/predictions_8km/csv/0.5")
+files <- list.files(, pattern=flux)
+files <- files[grepl(filename, files)]
+df <- do.call(cbind,lapply(files,read.csv)) # can do this because the number of rows is same across the predictions!
+selected_columns <- c(1, 2, seq(3, 36, by=3))
+df2 <- df[, selected_columns]
+print(colnames(df2)[3:length(colnames(df2))])
+df3 <- df2  %>% mutate(sum = rowSums(.[, 3:ncol(df2)]))
+df4 <- df3[, c(1, 2, ncol(df3))]
+rasterdf  <- as.matrix(df4[]) 
+r <- rast(rasterdf[], type="xyz")
+# plot(r)
+crs(r) <- "+proj=laea +lat_0=90 +lon_0=0 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs "
+writeRaster(r/1000, paste0("/home/master/predictions_8km/raster/0.5/NEE_gC_m2_simple.tif"))
+
+
+
 years <- seq(2000, 2011, by=1) # TEMPORARY
 
 for (y in years) {
